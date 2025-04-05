@@ -18,6 +18,11 @@ import { DataSource, DataSourceOptions } from 'typeorm';
 import { AllConfigType } from './config/config.type';
 import { SessionModule } from './session/session.module';
 import { MailerModule } from './mailer/mailer.module';
+import { TelegramAuthModule } from './telegram-auth/telegram-auth.module';
+import { DecksModule } from './decks/decks.module';
+import { CardsModule } from './cards/cards.module';
+import { StatisticsModule } from './statistics/statistics.module';
+import telegramConfig from './config/telegram-config';
 
 const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   useClass: TypeOrmConfigService,
@@ -30,7 +35,14 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, authConfig, appConfig, mailConfig, fileConfig],
+      load: [
+        databaseConfig,
+        authConfig,
+        appConfig,
+        mailConfig,
+        fileConfig,
+        telegramConfig,
+      ],
       envFilePath: ['.env'],
     }),
     infrastructureDatabaseModule,
@@ -64,6 +76,10 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
     MailModule,
     MailerModule,
     HomeModule,
+    TelegramAuthModule,
+    DecksModule,
+    CardsModule,
+    StatisticsModule,
   ],
 })
 export class AppModule {}

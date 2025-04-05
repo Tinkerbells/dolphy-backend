@@ -16,6 +16,7 @@ import { FileEntity } from '../../../../../files/infrastructure/persistence/rela
 
 import { AuthProvidersEnum } from '../../../../../auth/auth-providers.enum';
 import { EntityRelationalHelper } from '../../../../../utils/relational-entity-helper';
+import { Exclude } from 'class-transformer';
 
 @Entity({
   name: 'user',
@@ -29,6 +30,7 @@ export class UserEntity extends EntityRelationalHelper {
   @Column({ type: String, unique: true, nullable: true })
   email: string | null;
 
+  @Exclude({ toPlainOnly: true })
   @Column({ nullable: true })
   password?: string;
 
@@ -63,12 +65,15 @@ export class UserEntity extends EntityRelationalHelper {
   })
   status?: StatusEntity;
 
+  @Exclude({ toPlainOnly: true })
   @CreateDateColumn()
   createdAt: Date;
 
+  @Exclude({ toPlainOnly: true })
   @UpdateDateColumn()
   updatedAt: Date;
 
+  @Exclude({ toPlainOnly: true })
   @DeleteDateColumn()
   deletedAt: Date;
 }
