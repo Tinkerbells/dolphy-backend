@@ -1,16 +1,26 @@
 import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TelegramAuthController } from './telegram-auth.controller';
 import { TelegramAuthService } from './telegram-auth.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { TelegramProfile } from './entities/telegram-profile.entity';
 import { UsersModule } from '../users/users.module';
-import { ConfigModule } from '@nestjs/config';
+import { SessionModule } from '../session/session.module';
+import { AllConfigType } from '../config/config.type';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([TelegramProfile]),
     UsersModule,
-    ConfigModule,
+    SessionModule,
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService<AllConfigType>) => ({
+        secret: configService.get('auth.secret', { infer: true }),
+        signOptions: {
+          expiresIn: configService.get('auth.expires', { infer: true }),
+        },
+      }),
+    }),
   ],
   controllers: [TelegramAuthController],
   providers: [TelegramAuthService],

@@ -79,6 +79,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
     TelegramAuthModule,
     DecksModule,
     CardsModule,
+    TelegramAuthModule,
     StatisticsModule,
   ],
 })

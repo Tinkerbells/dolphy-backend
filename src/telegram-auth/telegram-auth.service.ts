@@ -1,173 +1,186 @@
 import * as crypto from 'crypto';
+import ms from 'ms';
 import {
-  HttpStatus,
   Injectable,
-  UnauthorizedException,
-  UnprocessableEntityException,
+  BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { TelegramProfile } from './entities/telegram-profile.entity';
-import { TelegramAuthDto } from './dto/telegram-auth.dto';
 import { ConfigService } from '@nestjs/config';
-import { createHash } from 'crypto';
+import { JwtService } from '@nestjs/jwt';
+import { parse, isValid } from '@telegram-apps/init-data-node';
+import { User } from '../users/domain/user';
 import { UsersService } from '../users/users.service';
 import { AuthProvidersEnum } from '../auth/auth-providers.enum';
 import { RoleEnum } from '../roles/roles.enum';
 import { StatusEnum } from '../statuses/statuses.enum';
+import { SessionService } from '../session/session.service';
+import { AllConfigType } from 'src/config/config.type';
+import { Session } from 'src/session/domain/session';
+import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
+import { LoginResponseDto } from 'src/auth/dto/login-response.dto';
 
 @Injectable()
 export class TelegramAuthService {
   constructor(
-    @InjectRepository(TelegramProfile)
-    private readonly telegramProfileRepository: Repository<TelegramProfile>,
-    private readonly usersService: UsersService,
-    private readonly configService: ConfigService,
+    private configService: ConfigService<AllConfigType>,
+    private usersService: UsersService,
+    private jwtService: JwtService,
+    private sessionService: SessionService,
   ) {}
 
-  // Проверка данных аутентификации Telegram
-  verifyTelegramData(data: TelegramAuthDto): boolean {
-    const botToken = this.configService.get('TELEGRAM_BOT_TOKEN', {
+  /**
+   * Проверяет данные аутентификации Telegram и создает/обновляет пользователя
+   *
+   * @param {string} initData - Данные инициализации от Telegram
+   * @returns {Promise<User>} Пользователь после аутентификации
+   */
+  async authenticateUser(initData: string): Promise<LoginResponseDto> {
+    // Проверяем валидность initData
+    const botToken = this.configService.get('telegram.botToken', {
       infer: true,
     });
     if (!botToken) {
-      throw new UnprocessableEntityException({
-        status: HttpStatus.UNPROCESSABLE_ENTITY,
-        errors: {
-          token: 'botTokenNotConfigured',
-        },
-      });
+      throw new BadRequestException('Токен бота не настроен');
     }
 
-    // Создаем строку для проверки
-    const dataCheckString = Object.keys(data)
-      .filter((key) => key !== 'hash')
-      .sort()
-      .map((key) => `${key}=${data[key]}`)
-      .join('\n');
+    const isInitDataValid = isValid(initData, botToken);
 
-    // Создаем секретный ключ
-    const secretKey = createHash('sha256').update(botToken).digest();
-
-    // Вычисляем хеш
-    const computedHash = createHash('sha256')
-      .update(dataCheckString)
-      .update(secretKey)
-      .digest('hex');
-
-    // Проверяем, совпадает ли хеш из запроса с вычисленным хешем
-    console.log(data.hash, computedHash);
-    return data.hash === computedHash;
-  }
-
-  // Метод для аутентификации пользователя Telegram
-  async authenticateUser(telegramAuthDto: TelegramAuthDto) {
-    // Проверяем данные аутентификации
-    const isValid = this.verifyTelegramData(telegramAuthDto);
-    if (!isValid) {
-      throw new UnauthorizedException('Invalid Telegram authentication data');
+    if (!isInitDataValid) {
+      throw new BadRequestException('Неверные данные инициализации');
     }
 
-    // Проверяем не истек ли срок действия данных аутентификации (24 часа)
-    const currentTimestamp = Math.floor(Date.now() / 1000);
-    if (currentTimestamp - telegramAuthDto.auth_date > 86400) {
-      throw new UnauthorizedException('Authentication data expired');
+    // Парсим данные и получаем информацию о пользователе Telegram
+    const parsedData = parse(initData);
+    const telegramUser = parsedData.user;
+
+    if (!telegramUser || !telegramUser.id) {
+      throw new BadRequestException('Данные пользователя отсутствуют');
     }
 
-    // Ищем существующий профиль Telegram
-    let telegramProfile = await this.telegramProfileRepository.findOne({
-      where: { telegramId: telegramAuthDto.id },
-      relations: ['user'],
+    // Ищем пользователя в базе или создаем нового
+
+    const role = {
+      id: RoleEnum.user,
+    };
+
+    let user = await this.usersService.findBySocialIdAndProvider({
+      socialId: telegramUser.id.toString(),
+      provider: AuthProvidersEnum.telegram,
     });
 
-    // Если профиль не найден, создаем новый профиль и пользователя
-    if (!telegramProfile) {
-      // Создаем нового пользователя
-      const user = await this.usersService.create({
-        firstName: telegramAuthDto.first_name,
-        lastName: telegramAuthDto.last_name || null,
+    if (!user) {
+      user = await this.usersService.create({
+        firstName: telegramUser.first_name,
+        lastName: telegramUser.last_name || null,
         email: null, // У пользователей Telegram может не быть email
         provider: AuthProvidersEnum.telegram,
-        socialId: telegramAuthDto.id.toString(),
-        role: { id: RoleEnum.user },
+        socialId: telegramUser.id.toString(),
+        role,
         status: { id: StatusEnum.active },
       });
 
-      // Создаем новый профиль Telegram
-      // Создаем новый профиль Telegram
-      telegramProfile = this.telegramProfileRepository.create({
-        telegramId: Number(telegramAuthDto.id), // Приводим к типу number
-        username: telegramAuthDto.username,
-        firstName: telegramAuthDto.first_name,
-        lastName: telegramAuthDto.last_name,
-        photoUrl: telegramAuthDto.photo_url,
-        authDate: new Date(telegramAuthDto.auth_date * 1000),
-        user: { id: Number(user.id) }, // Приводим к типу number
-      });
+      if (!user) {
+        throw new BadRequestException('Не удалось создать пользователя');
+      }
 
-      await this.telegramProfileRepository.save(telegramProfile);
-    } else {
-      // Обновляем существующий профиль
-      telegramProfile.username = telegramAuthDto.username;
-      telegramProfile.firstName = telegramAuthDto.first_name;
-      telegramProfile.lastName = telegramAuthDto.last_name;
-      telegramProfile.photoUrl = telegramAuthDto.photo_url;
-      telegramProfile.authDate = new Date(telegramAuthDto.auth_date * 1000);
-
-      await this.telegramProfileRepository.save(telegramProfile);
+      // Получаем полные данные пользователя
+      user = await this.usersService.findById(user.id);
     }
 
-    // Возвращаем данные пользователя
-    return this.usersService.findById(telegramProfile.user.id);
-  }
-
-  // Метод для получения профиля пользователя по telegramId
-  async findProfileByTelegramId(
-    telegramId: number,
-  ): Promise<TelegramProfile | null> {
-    return this.telegramProfileRepository.findOne({
-      where: { telegramId },
-      relations: ['user'],
-    });
-  }
-  createMockTelegramUser(
-    userData: Partial<TelegramAuthDto> = {},
-  ): TelegramAuthDto {
-    const botToken = this.configService.get('TELEGRAM_BOT_TOKEN', {
-      infer: true,
-    });
-    if (!botToken) {
-      throw new Error('TELEGRAM_BOT_TOKEN не настроен');
+    if (!user) {
+      throw new NotFoundException(
+        'Не удалось найти пользователя после создания',
+      );
     }
 
-    // Базовые данные пользователя
-    const mockUser: TelegramAuthDto = {
-      id: userData.id || 12345678,
-      first_name: userData.first_name || 'Test',
-      last_name: userData.last_name || 'User',
-      username: userData.username || 'testuser',
-      photo_url:
-        userData.photo_url || 'https://t.me/i/userpic/320/username.jpg',
-      auth_date: Math.floor(Date.now() / 1000),
-      hash: '', // Временно пустой
-    };
-
-    // Создаем строку данных для проверки (без hash)
-    const dataCheckString = Object.entries(mockUser)
-      .filter(([key]) => key !== 'hash')
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([key, value]) => `${key}=${value}`)
-      .join('\n');
-
-    // Создаем секретный ключ из токена бота
-    const secretKey = crypto.createHash('sha256').update(botToken).digest();
-
-    // Вычисляем hash
-    mockUser.hash = crypto
-      .createHmac('sha256', secretKey)
-      .update(dataCheckString)
+    const hash = crypto
+      .createHash('sha256')
+      .update(randomStringGenerator())
       .digest('hex');
 
-    return mockUser;
+    // Создаем сессию для пользователя
+    const session = await this.sessionService.create({
+      user,
+      hash,
+    });
+
+    // Получаем токены с помощью вспомогательного метода
+    const { token, refreshToken, tokenExpires } = await this.getTokensData({
+      id: user.id,
+      role: user.role,
+      sessionId: session.id,
+      hash,
+    });
+
+    // Возвращаем данные аутентификации
+    return {
+      refreshToken,
+      token,
+      tokenExpires,
+      user,
+    };
+  }
+
+  /**
+   * Генерирует токены для аутентифицированного пользователя
+   *
+   * @param {Object} data - Данные пользователя и сессии
+   * @returns {Promise<{ token: string, refreshToken: string, tokenExpires: number }>} Токены
+   */
+  private async getTokensData(data: {
+    id: User['id'];
+    role: User['role'];
+    sessionId: Session['id'];
+    hash: Session['hash'];
+  }) {
+    const tokenExpiresIn = this.configService.getOrThrow('auth.expires', {
+      infer: true,
+    });
+
+    const tokenExpires = Date.now() + ms(tokenExpiresIn);
+
+    const [token, refreshToken] = await Promise.all([
+      await this.jwtService.signAsync(
+        {
+          id: data.id,
+          role: data.role,
+          sessionId: data.sessionId,
+        },
+        {
+          secret: this.configService.getOrThrow('auth.secret', { infer: true }),
+          expiresIn: tokenExpiresIn,
+        },
+      ),
+      await this.jwtService.signAsync(
+        {
+          sessionId: data.sessionId,
+          hash: data.hash,
+        },
+        {
+          secret: this.configService.getOrThrow('auth.refreshSecret', {
+            infer: true,
+          }),
+          expiresIn: this.configService.getOrThrow('auth.refreshExpires', {
+            infer: true,
+          }),
+        },
+      ),
+    ]);
+
+    return {
+      token,
+      refreshToken,
+      tokenExpires,
+    };
+  }
+
+  /**
+   * Уничтожает сессию пользователя
+   *
+   * @param {string | number} sessionId - ID сессии
+   * @returns {Promise<void>}
+   */
+  async destroySession(sessionId: string | number): Promise<void> {
+    await this.sessionService.deleteById(sessionId);
   }
 }

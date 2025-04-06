@@ -495,6 +495,7 @@ export class AuthService {
   async refreshToken(
     data: Pick<JwtRefreshPayloadType, 'sessionId' | 'hash'>,
   ): Promise<Omit<LoginResponseDto, 'user'>> {
+    console.log('321321');
     const session = await this.sessionService.findById(data.sessionId);
 
     if (!session) {
