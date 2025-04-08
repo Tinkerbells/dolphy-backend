@@ -1,14 +1,18 @@
-import { Module, forwardRef } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { CardsController } from './cards.controller';
+import {
+  // common
+  Module,
+} from '@nestjs/common';
 import { CardsService } from './cards.service';
-import { Card } from './entities/card.entity';
-import { DecksModule } from '../decks/decks.module';
+import { CardsController } from './cards.controller';
+import { RelationalCardsPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Card]), forwardRef(() => DecksModule)],
+  imports: [
+    // import modules, etc.
+    RelationalCardsPersistenceModule,
+  ],
   controllers: [CardsController],
   providers: [CardsService],
-  exports: [CardsService],
+  exports: [CardsService, RelationalCardsPersistenceModule],
 })
 export class CardsModule {}

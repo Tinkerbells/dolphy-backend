@@ -1,32 +1,36 @@
 import {
-  Body,
   Controller,
-  Delete,
   Get,
-  HttpCode,
-  HttpStatus,
-  Param,
-  Patch,
   Post,
-  Query,
-  Request,
+  Body,
+  Patch,
+  Param,
+  Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
+import { DecksService } from './decks.service';
+import { CreateDecksDto } from './dto/create-decks.dto';
+import { UpdateDecksDto } from './dto/update-decks.dto';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
   ApiOkResponse,
+  ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
+import { Decks } from './domain/decks';
 import { AuthGuard } from '@nestjs/passport';
-import { DecksService } from './decks.service';
-import { CreateDeckDto } from './dto/create-deck.dto';
-import { UpdateDeckDto } from './dto/update-deck.dto';
-import { Deck } from './entities/deck.entity';
-import { QueryDeckDto } from './dto/query-deck.dto';
-import { InfinityPaginationResponseDto } from '../utils/dto/infinity-pagination-response.dto';
+import {
+  InfinityPaginationResponse,
+  InfinityPaginationResponseDto,
+} from '../utils/dto/infinity-pagination-response.dto';
+import { infinityPagination } from '../utils/infinity-pagination';
+import { FindAllDecksDto } from './dto/find-all-decks.dto';
 
 @ApiTags('Decks')
+@ApiBearerAuth()
+@UseGuards(AuthGuard('jwt'))
 @Controller({
   path: 'decks',
   version: '1',
@@ -35,60 +39,70 @@ export class DecksController {
   constructor(private readonly decksService: DecksService) {}
 
   @Post()
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt'))
-  @ApiCreatedResponse({ type: Deck })
-  @HttpCode(HttpStatus.CREATED)
-  create(@Body() createDeckDto: CreateDeckDto, @Request() req): Promise<Deck> {
-    return this.decksService.create(createDeckDto, req.user.id);
+  @ApiCreatedResponse({
+    type: Decks,
+  })
+  create(@Body() createDecksDto: CreateDecksDto) {
+    return this.decksService.create(createDecksDto);
   }
 
   @Get()
-  @ApiOkResponse({ type: [Deck] })
-  @HttpCode(HttpStatus.OK)
-  findAll(
-    @Query() query: QueryDeckDto,
-  ): Promise<InfinityPaginationResponseDto<Deck>> {
-    return this.decksService.findAll(query);
-  }
+  @ApiOkResponse({
+    type: InfinityPaginationResponse(Decks),
+  })
+  async findAll(
+    @Query() query: FindAllDecksDto,
+  ): Promise<InfinityPaginationResponseDto<Decks>> {
+    const page = query?.page ?? 1;
+    let limit = query?.limit ?? 10;
+    if (limit > 50) {
+      limit = 50;
+    }
 
-  @Get('my')
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOkResponse({ type: [Deck] })
-  @HttpCode(HttpStatus.OK)
-  findMyDecks(
-    @Query() query: QueryDeckDto,
-    @Request() req,
-  ): Promise<InfinityPaginationResponseDto<Deck>> {
-    return this.decksService.findMyDecks(query, req.user.id);
+    return infinityPagination(
+      await this.decksService.findAllWithPagination({
+        paginationOptions: {
+          page,
+          limit,
+        },
+      }),
+      { page, limit },
+    );
   }
 
   @Get(':id')
-  @ApiOkResponse({ type: Deck })
-  @HttpCode(HttpStatus.OK)
-  findOne(@Param('id') id: string): Promise<Deck> {
-    return this.decksService.findOne(id);
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  @ApiOkResponse({
+    type: Decks,
+  })
+  findById(@Param('id') id: string) {
+    return this.decksService.findById(id);
   }
 
   @Patch(':id')
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt'))
-  @ApiOkResponse({ type: Deck })
-  @HttpCode(HttpStatus.OK)
-  update(
-    @Param('id') id: string,
-    @Body() updateDeckDto: UpdateDeckDto,
-    @Request() req,
-  ): Promise<Deck> {
-    return this.decksService.update(id, updateDeckDto, req.user.id);
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  @ApiOkResponse({
+    type: Decks,
+  })
+  update(@Param('id') id: string, @Body() updateDecksDto: UpdateDecksDto) {
+    return this.decksService.update(id, updateDecksDto);
   }
 
   @Delete(':id')
-  @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt'))
-  @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id') id: string, @Request() req): Promise<void> {
-    return this.decksService.remove(id, req.user.id);
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  remove(@Param('id') id: string) {
+    return this.decksService.remove(id);
   }
 }

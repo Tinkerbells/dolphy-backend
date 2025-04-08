@@ -1,13 +1,18 @@
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { DecksController } from './decks.controller';
+import {
+  // common
+  Module,
+} from '@nestjs/common';
 import { DecksService } from './decks.service';
-import { Deck } from './entities/deck.entity';
+import { DecksController } from './decks.controller';
+import { RelationalDecksPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Deck])],
+  imports: [
+    // import modules, etc.
+    RelationalDecksPersistenceModule,
+  ],
   controllers: [DecksController],
   providers: [DecksService],
-  exports: [DecksService],
+  exports: [DecksService, RelationalDecksPersistenceModule],
 })
 export class DecksModule {}

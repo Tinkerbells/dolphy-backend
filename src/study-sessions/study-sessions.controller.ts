@@ -9,9 +9,9 @@ import {
   UseGuards,
   Query,
 } from '@nestjs/common';
-import { CardsService } from './cards.service';
-import { CreateCardsDto } from './dto/create-cards.dto';
-import { UpdateCardsDto } from './dto/update-cards.dto';
+import { StudySessionsService } from './study-sessions.service';
+import { CreateStudySessionDto } from './dto/create-study-session.dto';
+import { UpdateStudySessionDto } from './dto/update-study-session.dto';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
@@ -19,40 +19,40 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import { Cards } from './domain/cards';
+import { StudySession } from './domain/study-session';
 import { AuthGuard } from '@nestjs/passport';
 import {
   InfinityPaginationResponse,
   InfinityPaginationResponseDto,
 } from '../utils/dto/infinity-pagination-response.dto';
 import { infinityPagination } from '../utils/infinity-pagination';
-import { FindAllCardsDto } from './dto/find-all-cards.dto';
+import { FindAllStudySessionsDto } from './dto/find-all-study-sessions.dto';
 
-@ApiTags('Cards')
+@ApiTags('Studysessions')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 @Controller({
-  path: 'cards',
+  path: 'study-sessions',
   version: '1',
 })
-export class CardsController {
-  constructor(private readonly cardsService: CardsService) {}
+export class StudySessionsController {
+  constructor(private readonly studySessionsService: StudySessionsService) {}
 
   @Post()
   @ApiCreatedResponse({
-    type: Cards,
+    type: StudySession,
   })
-  create(@Body() createCardsDto: CreateCardsDto) {
-    return this.cardsService.create(createCardsDto);
+  create(@Body() createStudySessionDto: CreateStudySessionDto) {
+    return this.studySessionsService.create(createStudySessionDto);
   }
 
   @Get()
   @ApiOkResponse({
-    type: InfinityPaginationResponse(Cards),
+    type: InfinityPaginationResponse(StudySession),
   })
   async findAll(
-    @Query() query: FindAllCardsDto,
-  ): Promise<InfinityPaginationResponseDto<Cards>> {
+    @Query() query: FindAllStudySessionsDto,
+  ): Promise<InfinityPaginationResponseDto<StudySession>> {
     const page = query?.page ?? 1;
     let limit = query?.limit ?? 10;
     if (limit > 50) {
@@ -60,7 +60,7 @@ export class CardsController {
     }
 
     return infinityPagination(
-      await this.cardsService.findAllWithPagination({
+      await this.studySessionsService.findAllWithPagination({
         paginationOptions: {
           page,
           limit,
@@ -77,10 +77,10 @@ export class CardsController {
     required: true,
   })
   @ApiOkResponse({
-    type: Cards,
+    type: StudySession,
   })
   findById(@Param('id') id: string) {
-    return this.cardsService.findById(id);
+    return this.studySessionsService.findById(id);
   }
 
   @Patch(':id')
@@ -90,10 +90,13 @@ export class CardsController {
     required: true,
   })
   @ApiOkResponse({
-    type: Cards,
+    type: StudySession,
   })
-  update(@Param('id') id: string, @Body() updateCardsDto: UpdateCardsDto) {
-    return this.cardsService.update(id, updateCardsDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateStudySessionDto: UpdateStudySessionDto,
+  ) {
+    return this.studySessionsService.update(id, updateStudySessionDto);
   }
 
   @Delete(':id')
@@ -103,6 +106,6 @@ export class CardsController {
     required: true,
   })
   remove(@Param('id') id: string) {
-    return this.cardsService.remove(id);
+    return this.studySessionsService.remove(id);
   }
 }
