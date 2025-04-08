@@ -46,7 +46,7 @@ export class DecksService {
       where.owner = { id: query.ownerId };
     }
 
-    const [data, total] = await this.decksRepository.findAndCount({
+    const [data] = await this.decksRepository.findAndCount({
       where,
       skip: (page - 1) * limit,
       take: limit,
@@ -74,7 +74,7 @@ export class DecksService {
       where.isPublic = query.isPublic;
     }
 
-    const [data, total] = await this.decksRepository.findAndCount({
+    const [data] = await this.decksRepository.findAndCount({
       where,
       skip: (page - 1) * limit,
       take: limit,
@@ -128,8 +128,6 @@ export class DecksService {
 
   // Обновление счетчика карточек
   async updateCardsCount(deckId: string): Promise<void> {
-    const deck = await this.findOne(deckId);
-
     // Получаем количество карточек из базы данных
     const count = await this.decksRepository
       .createQueryBuilder('deck')
