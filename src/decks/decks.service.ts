@@ -1,6 +1,7 @@
 import {
-  // common
   Injectable,
+  NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { CreateDecksDto } from './dto/create-decks.dto';
 import { UpdateDecksDto } from './dto/update-decks.dto';
@@ -10,60 +11,109 @@ import { Decks } from './domain/decks';
 
 @Injectable()
 export class DecksService {
-  constructor(
-    // Dependencies here
-    private readonly decksRepository: DecksRepository,
-  ) {}
+  constructor(private readonly decksRepository: DecksRepository) {}
 
-  async create(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    createDecksDto: CreateDecksDto,
-  ) {
-    // Do not remove comment below.
-    // <creating-property />
-
+  async create(createDecksDto: CreateDecksDto): Promise<Decks> {
     return this.decksRepository.create({
-      // Do not remove comment below.
-      // <creating-property-payload />
+      title: createDecksDto.title,
+      description: createDecksDto.description,
+      isPublic: createDecksDto.isPublic || false,
+      cardsCount: 0,
+      ownerId: createDecksDto.ownerId,
     });
   }
 
   findAllWithPagination({
     paginationOptions,
+    ownerId,
+    isPublic,
   }: {
     paginationOptions: IPaginationOptions;
-  }) {
+    ownerId?: number;
+    isPublic?: boolean;
+  }): Promise<Decks[]> {
     return this.decksRepository.findAllWithPagination({
-      paginationOptions: {
-        page: paginationOptions.page,
-        limit: paginationOptions.limit,
-      },
+      paginationOptions,
+      ownerId,
+      isPublic,
     });
   }
 
-  findById(id: Decks['id']) {
-    return this.decksRepository.findById(id);
+  async findById(id: Decks['id']): Promise<Decks> {
+    const deck = await this.decksRepository.findById(id);
+    if (!deck) {
+      throw new NotFoundException(`Колода с ID ${id} не найдена`);
+    }
+    return deck;
   }
 
-  findByIds(ids: Decks['id'][]) {
+  findByIds(ids: Decks['id'][]): Promise<Decks[]> {
     return this.decksRepository.findByIds(ids);
+  }
+
+  async findByOwner(ownerId: number): Promise<Decks[]> {
+    return this.decksRepository.findByOwner(ownerId);
+  }
+
+  async findPublic(paginationOptions: IPaginationOptions): Promise<Decks[]> {
+    return this.decksRepository.findPublic(paginationOptions);
   }
 
   async update(
     id: Decks['id'],
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     updateDecksDto: UpdateDecksDto,
-  ) {
-    // Do not remove comment below.
-    // <updating-property />
+  ): Promise<Decks> {
+    const deck = await this.decksRepository.findById(id);
+    if (!deck) {
+      throw new NotFoundException(`Колода с ID ${id} не найдена`);
+    }
 
-    return this.decksRepository.update(id, {
-      // Do not remove comment below.
-      // <updating-property-payload />
-    });
+    const updatedDeck = await this.decksRepository.update(id, updateDecksDto);
+    if (!updatedDeck) {
+      throw new BadRequestException(`Не удалось обновить колоду с ID ${id}`);
+    }
+
+    return updatedDeck;
   }
 
-  remove(id: Decks['id']) {
+  async incrementCardsCount(id: Decks['id']): Promise<Decks> {
+    const deck = await this.decksRepository.findById(id);
+    if (!deck) {
+      throw new NotFoundException(`Колода с ID ${id} не найдена`);
+    }
+
+    const updatedDeck = await this.decksRepository.incrementCardsCount(id);
+    if (!updatedDeck) {
+      throw new BadRequestException(
+        `Не удалось обновить счетчик карточек для колоды с ID ${id}`,
+      );
+    }
+
+    return updatedDeck;
+  }
+
+  async decrementCardsCount(id: Decks['id']): Promise<Decks> {
+    const deck = await this.decksRepository.findById(id);
+    if (!deck) {
+      throw new NotFoundException(`Колода с ID ${id} не найдена`);
+    }
+
+    const updatedDeck = await this.decksRepository.decrementCardsCount(id);
+    if (!updatedDeck) {
+      throw new BadRequestException(
+        `Не удалось обновить счетчик карточек для колоды с ID ${id}`,
+      );
+    }
+
+    return updatedDeck;
+  }
+
+  async remove(id: Decks['id']): Promise<void> {
+    const deck = await this.decksRepository.findById(id);
+    if (!deck) {
+      throw new NotFoundException(`Колода с ID ${id} не найдена`);
+    }
+
     return this.decksRepository.remove(id);
   }
 }
