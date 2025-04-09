@@ -19,11 +19,11 @@ import { AllConfigType } from './config/config.type';
 import { SessionModule } from './session/session.module';
 import { MailerModule } from './mailer/mailer.module';
 import { TelegramAuthModule } from './telegram-auth/telegram-auth.module';
-import { DecksModule } from './decks/decks.module';
 import { CardsModule } from './cards/cards.module';
-import { StatisticsModule } from './statistics/statistics.module';
+import { DecksModule } from './decks/decks.module';
+import { StudySessionsModule } from './study-sessions/study-sessions.module';
+
 import telegramConfig from './config/telegram-config';
-import { StudyModule } from './study/study-session.module';
 
 const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   useClass: TypeOrmConfigService,
@@ -32,20 +32,8 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   },
 });
 
-import { PostsModule } from './posts/posts.module';
-
-import { CardsModule } from './cards/cards.module';
-
-import { DecksModule } from './decks/decks.module';
-
-import { StudySessionsModule } from './study-sessions/study-sessions.module';
-
 @Module({
   imports: [
-    StudySessionsModule,
-    DecksModule,
-    CardsModule,
-    PostsModule,
     ConfigModule.forRoot({
       isGlobal: true,
       load: [
@@ -93,8 +81,9 @@ import { StudySessionsModule } from './study-sessions/study-sessions.module';
     DecksModule,
     CardsModule,
     TelegramAuthModule,
-    StatisticsModule,
-    StudyModule,
+    StudySessionsModule,
+    DecksModule,
+    CardsModule,
   ],
 })
 export class AppModule {}
