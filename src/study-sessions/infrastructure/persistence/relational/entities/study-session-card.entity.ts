@@ -36,7 +36,7 @@ export class StudySessionCardEntity extends EntityRelationalHelper {
   consecutiveCorrect: number;
 
   @Column({ type: 'timestamp', nullable: true })
-  dueDate: Date | null;
+  dueDate?: Date;
 
   @Column({ default: false })
   isCompleted: boolean;
@@ -45,10 +45,10 @@ export class StudySessionCardEntity extends EntityRelationalHelper {
   attempts: number;
 
   @Column({ type: 'timestamp', nullable: true })
-  lastReviewedAt: Date | null;
+  lastReviewedAt?: Date;
 
   @Column({ nullable: true })
-  lastAnswer: number | null;
+  lastAnswer?: number;
 
   @ManyToOne(() => StudySessionEntity, (session) => session.cards)
   @JoinColumn({ name: 'sessionId' })
