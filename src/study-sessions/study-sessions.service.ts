@@ -71,8 +71,15 @@ export class StudySessionsService {
       });
     }
 
-    // Возвращаем сессию с карточками
-    return this.studySessionRepository.findByIdWithCards(studySession.id);
+    const createdSessionWithCards =
+      await this.studySessionRepository.findByIdWithCards(studySession.id);
+
+    if (!createdSessionWithCards) {
+      throw new NotFoundException(
+        `Created study session with id ${studySession.id} not found`,
+      );
+    }
+    return createdSessionWithCards;
   }
 
   async getNextCard(sessionId: string): Promise<NextCardResponseDto> {
@@ -111,6 +118,11 @@ export class StudySessionsService {
       // Получаем обновленную сессию
       const updatedSession =
         await this.studySessionRepository.findById(sessionId);
+      if (!updatedSession) {
+        throw new NotFoundException(
+          `Updated study session with id ${sessionId} not found`,
+        );
+      }
 
       return {
         card: null,
@@ -218,7 +230,17 @@ export class StudySessionsService {
       throw new NotFoundException(`Study session with id ${id} not found`);
     }
 
-    return this.studySessionRepository.update(id, updateStudySessionDto);
+    const updatedSession = await this.studySessionRepository.update(
+      id,
+      updateStudySessionDto,
+    );
+    if (!updatedSession) {
+      throw new BadRequestException(
+        `Failed to update study session with id ${id}`,
+      );
+    }
+
+    return updatedSession;
   }
 
   async remove(id: string): Promise<void> {
