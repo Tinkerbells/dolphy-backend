@@ -63,11 +63,8 @@ export class StudySessionsService {
         interval: 0,
         easeFactor: 2500, // Начальный фактор легкости (250%)
         consecutiveCorrect: 0,
-        dueDate: null,
         isCompleted: false,
         attempts: 0,
-        lastReviewedAt: null,
-        lastAnswer: null,
       });
     }
 

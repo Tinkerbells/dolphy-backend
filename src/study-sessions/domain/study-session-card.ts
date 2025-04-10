@@ -51,7 +51,7 @@ export class StudySessionCard {
     type: Date,
     nullable: true,
   })
-  dueDate: Date | null;
+  dueDate?: Date;
 
   @ApiProperty({
     description: 'Завершена ли карточка в текущей сессии',
@@ -68,13 +68,13 @@ export class StudySessionCard {
     type: Date,
     nullable: true,
   })
-  lastReviewedAt: Date | null;
+  lastReviewedAt?: Date;
 
   @ApiProperty({
     description: 'Последний ответ пользователя (1-4)',
     nullable: true,
   })
-  lastAnswer: number | null;
+  lastAnswer?: number;
 
   @ApiProperty()
   createdAt: Date;

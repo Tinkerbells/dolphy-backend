@@ -92,12 +92,15 @@ export class StudySessionRelationalRepository
       throw new Error('Record not found');
     }
 
-    const updatedEntity = await this.studySessionRepository.save(
-      this.studySessionRepository.create({
-        ...entity,
-        ...payload,
-      }),
-    );
+    // Исключаем свойство cards из payload, используем префикс "_" для переменной
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { cards: _cards, ...payloadWithoutCards } = payload;
+
+    // Объединяем существующую сущность с обновлениями
+    const updatedEntity = await this.studySessionRepository.save({
+      ...entity,
+      ...payloadWithoutCards,
+    });
 
     return StudySessionMapper.toDomain(updatedEntity);
   }
@@ -165,7 +168,6 @@ export class StudySessionRelationalRepository
       return StudySessionCardMapper.toDomain(entity);
     }
 
-    // Затем ищем карточки в процессе изучения, у которых наступило время повторения
     const now = new Date();
     entity = await this.studySessionCardRepository.findOne({
       where: {
@@ -182,7 +184,6 @@ export class StudySessionRelationalRepository
       return StudySessionCardMapper.toDomain(entity);
     }
 
-    // Наконец, ищем карточки на повторении, у которых наступило время повторения
     entity = await this.studySessionCardRepository.findOne({
       where: {
         sessionId,
@@ -198,7 +199,6 @@ export class StudySessionRelationalRepository
       return StudySessionCardMapper.toDomain(entity);
     }
 
-    // Если нет карточек с истекшим сроком, берем следующую по времени
     entity = await this.studySessionCardRepository.findOne({
       where: {
         sessionId,
@@ -224,12 +224,12 @@ export class StudySessionRelationalRepository
       throw new Error('Study session card not found');
     }
 
-    const updatedEntity = await this.studySessionCardRepository.save(
-      this.studySessionCardRepository.create({
-        ...entity,
-        ...payload,
-      }),
-    );
+    const newEntity = this.studySessionCardRepository.create({
+      ...entity,
+      ...payload,
+    });
+
+    const updatedEntity = await this.studySessionCardRepository.save(newEntity);
 
     return StudySessionCardMapper.toDomain(updatedEntity);
   }
