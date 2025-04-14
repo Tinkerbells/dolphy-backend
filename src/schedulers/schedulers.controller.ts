@@ -24,7 +24,6 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { State } from 'ts-fsrs';
-import { ReviewResult } from './domain/review-result';
 import { AuthGuard } from '@nestjs/passport';
 import { StatisticsService } from 'src/statistics/statistics.service';
 
@@ -35,7 +34,7 @@ import { StatisticsService } from 'src/statistics/statistics.service';
   path: 'scheduler',
   version: '1',
 })
-export class SchedulerController {
+export class SchedulersController {
   constructor(
     private readonly schedulerService: SchedulersService,
     private readonly statisticsService: StatisticsService,
@@ -67,8 +66,6 @@ export class SchedulerController {
   async getDueCards(
     @Request() req,
     @Query('timestamp') timestamp = Date.now(),
-    @Query('dids') dids?: number[],
-    @Query('source') source?: string[],
   ) {
     // Получаем статистику по сегодняшним повторениям
     const today = new Date();
@@ -76,19 +73,10 @@ export class SchedulerController {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const todayCount = await this.statisticsService.getRangeRevlogCount(
-      req.user.id,
-      [today.getTime(), tomorrow.getTime()],
-      [State.New, State.Learning, State.Review, State.Relearning],
-      dids,
-    );
-
     // Получаем карточки для повторения
     const cards = await this.schedulerService.getReviewCardDetails(
       req.user.id,
       +timestamp,
-      todayCount,
-      { dids, source },
     );
 
     return {
@@ -102,7 +90,6 @@ export class SchedulerController {
   @Post('review')
   @ApiOperation({ summary: 'Зафиксировать ответ на карточку' })
   @ApiBody({ type: NextReviewDto })
-  @ApiOkResponse({ type: ReviewResult })
   async nextReview(@Request() req, @Body() dto: NextReviewDto) {
     return this.schedulerService.next(
       req.user.id,
@@ -117,7 +104,6 @@ export class SchedulerController {
   @Post('forget')
   @ApiOperation({ summary: 'Сбросить прогресс карточки' })
   @ApiBody({ type: ForgetCardDto })
-  @ApiOkResponse({ type: ReviewResult })
   async forgetCard(@Request() req, @Body() dto: ForgetCardDto) {
     const timestamp = Date.now();
     return this.schedulerService.forget(
@@ -132,7 +118,6 @@ export class SchedulerController {
   @Delete('review')
   @ApiOperation({ summary: 'Отменить последнее повторение' })
   @ApiBody({ type: UndoReviewDto })
-  @ApiOkResponse({ type: ReviewResult })
   async undoReview(@Request() req, @Body() dto: UndoReviewDto) {
     return this.schedulerService.undo(req.user.id, dto.cid, dto.lid);
   }
@@ -140,7 +125,6 @@ export class SchedulerController {
   @Post('suspend')
   @ApiOperation({ summary: 'Приостановить/возобновить карточку' })
   @ApiBody({ type: SuspendCardDto })
-  @ApiOkResponse({ type: ReviewResult })
   async suspendCard(@Request() req, @Body() dto: SuspendCardDto) {
     const timestamp = Date.now();
     return this.schedulerService.switchSuspend(

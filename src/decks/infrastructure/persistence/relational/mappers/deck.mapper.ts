@@ -12,8 +12,8 @@ export class DeckMapper {
     deck.card_limit = entity.card_limit;
     deck.deleted = entity.deleted;
     deck.uid = entity.uid;
-    deck.created = +entity.created;
-    deck.updated = +entity.updated;
+    deck.createdAt = +entity.created;
+    deck.updatedAt = +entity.updated;
 
     return deck;
   }
@@ -28,8 +28,8 @@ export class DeckMapper {
     entity.card_limit = domain.card_limit;
     entity.deleted = domain.deleted;
     entity.uid = domain.uid;
-    entity.created = domain.created;
-    entity.updated = domain.updated;
+    entity.created = domain.createdAt;
+    entity.updated = domain.updatedAt;
 
     return entity;
   }

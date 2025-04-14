@@ -1,17 +1,17 @@
 import { Module } from '@nestjs/common';
-import { SchedulerRepository } from '../scheduler.repository';
-import { SchedulerRelationalRepository } from './repositories/revlog.repository';
+import { RevlogRelationalRepository } from './repositories/revlog.repository';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { SchedulerEntity } from './entities/revlog.entity';
+import { RevlogEntity } from './entities/revlog.entity';
+import { RevlogRepository } from '../revlog.repository';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([SchedulerEntity])],
+  imports: [TypeOrmModule.forFeature([RevlogEntity])],
   providers: [
     {
-      provide: SchedulerRepository,
-      useClass: SchedulerRelationalRepository,
+      provide: RevlogRepository,
+      useClass: RevlogRelationalRepository,
     },
   ],
-  exports: [SchedulerRepository],
+  exports: [RevlogRepository],
 })
 export class RelationalSchedulerPersistenceModule {}

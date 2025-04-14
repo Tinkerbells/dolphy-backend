@@ -1,5 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsObject } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsObject,
+  IsNumber,
+} from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class CreateNoteDto {
   @ApiProperty({ description: 'Вопрос', example: 'Столица Франции?' })
@@ -29,4 +36,13 @@ export class CreateNoteDto {
   @IsObject()
   @IsOptional()
   extend?: Record<string, any>;
+
+  @ApiPropertyOptional({
+    description: 'ID колоды, к которой принадлежит заметка',
+    example: 123,
+  })
+  @IsNumber()
+  @IsOptional()
+  @Transform(({ value }) => (value ? Number(value) : undefined))
+  deckId?: number;
 }

@@ -1,17 +1,17 @@
 import { Module } from '@nestjs/common';
-import { DecksRepository } from '../deck.repository';
-import { DecksRelationalRepository } from './repositories/deck.repository';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { DecksEntity } from './entities/deck.entity';
+import { DeckRepository } from '../deck.repository';
+import { DeckRelationalRepository } from './repositories/deck.repository';
+import { DeckEntity } from './entities/deck.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([DecksEntity])],
+  imports: [TypeOrmModule.forFeature([DeckEntity])],
   providers: [
     {
-      provide: DecksRepository,
-      useClass: DecksRelationalRepository,
+      provide: DeckRepository,
+      useClass: DeckRelationalRepository,
     },
   ],
-  exports: [DecksRepository],
+  exports: [DeckRepository],
 })
 export class RelationalDecksPersistenceModule {}

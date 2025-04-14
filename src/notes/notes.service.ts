@@ -5,13 +5,13 @@ import { CreateNoteDto } from './dto/create-note.dto';
 import { UpdateNoteDto } from './dto/update-note.dto';
 import { DeepPartial } from '../utils/types/deep-partial.type';
 import { NullableType } from '../utils/types/nullable.type';
-import { SchedulerService } from 'src/schedulers/schedulers.service';
+import { SchedulersService } from 'src/schedulers/schedulers.service';
 
 @Injectable()
 export class NotesService {
   constructor(
     private readonly noteRepository: NoteRepository,
-    private readonly schedulerService: SchedulerService,
+    private readonly schedulerService: SchedulersService,
   ) {}
 
   async findAll(
