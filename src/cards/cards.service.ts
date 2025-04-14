@@ -5,9 +5,9 @@ import {
 } from '@nestjs/common';
 import { CreateCardsDto } from './dto/create-cards.dto';
 import { UpdateCardsDto } from './dto/update-cards.dto';
-import { CardsRepository } from './infrastructure/persistence/cards.repository';
+import { CardsRepository } from './infrastructure/persistence/card.repository';
 import { IPaginationOptions } from '../utils/types/pagination-options';
-import { Cards } from './domain/cards';
+import { Cards } from './domain/card';
 import { DecksService } from '../decks/decks.service';
 
 @Injectable()

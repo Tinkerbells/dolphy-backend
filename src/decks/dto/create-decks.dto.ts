@@ -1,49 +1,40 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsBoolean,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
   IsString,
-  MaxLength,
+  IsNotEmpty,
+  IsOptional,
+  IsObject,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+import { FSRSParameters } from '../../fsrs/domain/fsrs-parameters';
+import { CardLimits } from '../../fsrs/domain/card-limits';
 
-export class CreateDecksDto {
-  @ApiProperty({
-    description: 'Название колоды',
-    example: 'Английские неправильные глаголы',
-  })
+export class CreateDeckDto {
+  @ApiProperty({ description: 'Название колоды', example: 'Английские слова' })
   @IsString()
   @IsNotEmpty()
-  @MaxLength(255)
-  title: string;
+  name: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Описание колоды',
-    example:
-      'Коллекция распространенных неправильных глаголов английского языка',
-    required: false,
+    example: 'Колода для изучения английских слов',
   })
   @IsString()
   @IsOptional()
   description?: string;
 
-  @ApiProperty({
-    description: 'Флаг публичной доступности колоды',
-    example: false,
-    default: false,
-    required: false,
-  })
-  @IsBoolean()
+  @ApiPropertyOptional({ description: 'Параметры FSRS' })
+  @IsObject()
   @IsOptional()
-  isPublic?: boolean;
+  @ValidateNested()
+  @Type(() => Object)
+  fsrs?: FSRSParameters;
 
-  @ApiProperty({
-    description: 'ID владельца колоды',
-    example: 1,
-    required: false,
-  })
-  @IsNumber()
+  @ApiPropertyOptional({ description: 'Лимиты карточек' })
+  @IsObject()
   @IsOptional()
-  ownerId?: number;
+  @ValidateNested()
+  @Type(() => Object)
+  card_limit?: CardLimits;
 }

@@ -1,119 +1,66 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
-import { CreateDecksDto } from './dto/create-decks.dto';
-import { UpdateDecksDto } from './dto/update-decks.dto';
-import { DecksRepository } from './infrastructure/persistence/decks.repository';
-import { IPaginationOptions } from '../utils/types/pagination-options';
-import { Decks } from './domain/decks';
+import { Injectable } from '@nestjs/common';
+import { DeckRepository } from './infrastructure/persistence/deck.repository';
+import { Deck } from './domain/deck';
+import { DeepPartial } from '../utils/types/deep-partial.type';
+import { generatorParameters } from 'ts-fsrs';
+import { FSRSParameters } from '../fsrs/domain/fsrs-parameters';
+import { CardLimits } from '../fsrs/domain/card-limits';
+import { NullableType } from '../utils/types/nullable.type';
+import { CreateDeckDto } from './dto/create-decks.dto';
+import { UpdateDeckDto } from './dto/update-decks.dto';
 
 @Injectable()
 export class DecksService {
-  constructor(private readonly decksRepository: DecksRepository) {}
+  constructor(private readonly deckRepository: DeckRepository) {}
 
-  async create(createDecksDto: CreateDecksDto): Promise<Decks> {
-    return this.decksRepository.create({
-      title: createDecksDto.title,
-      description: createDecksDto.description,
-      isPublic: createDecksDto.isPublic || false,
-      cardsCount: 0,
-      ownerId: createDecksDto.ownerId,
+  async getDefaultDeck(uid: number): Promise<number> {
+    return this.deckRepository.getDefaultDeck(uid);
+  }
+
+  async findAll(uid: number, deleted: boolean = false): Promise<Deck[]> {
+    return this.deckRepository.findAll(uid, deleted);
+  }
+
+  async findById(id: number, uid: number): Promise<NullableType<Deck>> {
+    return this.deckRepository.findById(id, uid);
+  }
+
+  async create(uid: number, dto: CreateDeckDto): Promise<Deck> {
+    const defaultParams: FSRSParameters = dto.fsrs || generatorParameters();
+    const defaultLimits: CardLimits = dto.card_limit || {
+      new: 50,
+      review: Number.MAX_SAFE_INTEGER,
+      learning: Number.MAX_SAFE_INTEGER,
+      suspended: 8,
+    };
+
+    return this.deckRepository.create({
+      uid,
+      name: dto.name,
+      description: dto.description || '',
+      fsrs: defaultParams,
+      card_limit: defaultLimits,
+      deleted: false,
     });
-  }
-
-  findAllWithPagination({
-    paginationOptions,
-    ownerId,
-    isPublic,
-  }: {
-    paginationOptions: IPaginationOptions;
-    ownerId?: number;
-    isPublic?: boolean;
-  }): Promise<Decks[]> {
-    return this.decksRepository.findAllWithPagination({
-      paginationOptions,
-      ownerId,
-      isPublic,
-    });
-  }
-
-  async findById(id: Decks['id']): Promise<Decks> {
-    const deck = await this.decksRepository.findById(id);
-    if (!deck) {
-      throw new NotFoundException(`Колода с ID ${id} не найдена`);
-    }
-    return deck;
-  }
-
-  findByIds(ids: Decks['id'][]): Promise<Decks[]> {
-    return this.decksRepository.findByIds(ids);
-  }
-
-  async findByOwner(ownerId: number): Promise<Decks[]> {
-    return this.decksRepository.findByOwner(ownerId);
-  }
-
-  async findPublic(paginationOptions: IPaginationOptions): Promise<Decks[]> {
-    return this.decksRepository.findPublic(paginationOptions);
   }
 
   async update(
-    id: Decks['id'],
-    updateDecksDto: UpdateDecksDto,
-  ): Promise<Decks> {
-    const deck = await this.decksRepository.findById(id);
-    if (!deck) {
-      throw new NotFoundException(`Колода с ID ${id} не найдена`);
-    }
+    id: number,
+    uid: number,
+    dto: UpdateDeckDto,
+  ): Promise<NullableType<Deck>> {
+    // Создаем объект с обновленными данными
+    const updateData: DeepPartial<Deck> = {};
 
-    const updatedDeck = await this.decksRepository.update(id, updateDecksDto);
-    if (!updatedDeck) {
-      throw new BadRequestException(`Не удалось обновить колоду с ID ${id}`);
-    }
+    if (dto.name !== undefined) updateData.name = dto.name;
+    if (dto.description !== undefined) updateData.description = dto.description;
+    if (dto.fsrs !== undefined) updateData.fsrs = dto.fsrs;
+    if (dto.card_limit !== undefined) updateData.card_limit = dto.card_limit;
 
-    return updatedDeck;
+    return this.deckRepository.update(id, updateData, uid);
   }
 
-  async incrementCardsCount(id: Decks['id']): Promise<Decks> {
-    const deck = await this.decksRepository.findById(id);
-    if (!deck) {
-      throw new NotFoundException(`Колода с ID ${id} не найдена`);
-    }
-
-    const updatedDeck = await this.decksRepository.incrementCardsCount(id);
-    if (!updatedDeck) {
-      throw new BadRequestException(
-        `Не удалось обновить счетчик карточек для колоды с ID ${id}`,
-      );
-    }
-
-    return updatedDeck;
-  }
-
-  async decrementCardsCount(id: Decks['id']): Promise<Decks> {
-    const deck = await this.decksRepository.findById(id);
-    if (!deck) {
-      throw new NotFoundException(`Колода с ID ${id} не найдена`);
-    }
-
-    const updatedDeck = await this.decksRepository.decrementCardsCount(id);
-    if (!updatedDeck) {
-      throw new BadRequestException(
-        `Не удалось обновить счетчик карточек для колоды с ID ${id}`,
-      );
-    }
-
-    return updatedDeck;
-  }
-
-  async remove(id: Decks['id']): Promise<void> {
-    const deck = await this.decksRepository.findById(id);
-    if (!deck) {
-      throw new NotFoundException(`Колода с ID ${id} не найдена`);
-    }
-
-    return this.decksRepository.remove(id);
+  async remove(id: number, uid: number): Promise<boolean> {
+    return this.deckRepository.softDelete(id, uid);
   }
 }

@@ -101,6 +101,9 @@ importers:
       swagger-ui-express:
         specifier: 5.0.1
         version: 5.0.1(express@5.0.1)
+      ts-fsrs:
+        specifier: ^4.7.1
+        version: 4.7.1
       typeorm:
         specifier: 0.3.21
         version: 0.3.21(pg@8.14.0)(reflect-metadata@0.2.2)(ts-node@10.9.2(@swc/core@1.11.8)(@types/node@22.13.10)(typescript@5.8.2))
@@ -4973,6 +4976,10 @@ packages:
     engines: {node: '>=18.12'}
     peerDependencies:
       typescript: '>=4.8.4'
+
+  ts-fsrs@4.7.1:
+    resolution: {integrity: sha512-uYqKbSCNWLRPT0PfqFFy2rn0YuYz2fKmtgpgHOBd5/DP14oj6diG7P271AwJ8iGrKnmIspzXCF+nTKxict+Lcg==}
+    engines: {node: '>=18.0.0'}
 
   ts-jest@29.2.6:
     resolution: {integrity: sha512-yTNZVZqc8lSixm+QGVFcPe6+yj7+TWZwIesuOWvfcn4B9bz5x4NDzVCQQjOs7Hfouu36aEqfEbo9Qpo+gq8dDg==}
@@ -11117,6 +11124,8 @@ snapshots:
   ts-api-utils@2.1.0(typescript@5.8.2):
     dependencies:
       typescript: 5.8.2
+
+  ts-fsrs@4.7.1: {}
 
   ts-jest@29.2.6(@babel/core@7.26.10)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.10))(jest@29.7.0(@types/node@22.13.10)(ts-node@10.9.2(@swc/core@1.11.8)(@types/node@22.13.10)(typescript@5.8.2)))(typescript@5.8.2):
     dependencies:

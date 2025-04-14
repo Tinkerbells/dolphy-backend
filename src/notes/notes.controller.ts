@@ -9,9 +9,9 @@ import {
   UseGuards,
   Query,
 } from '@nestjs/common';
-import { CardsService } from './cards.service';
-import { CreateCardsDto } from './dto/create-cards.dto';
-import { UpdateCardsDto } from './dto/update-cards.dto';
+import { NotesService } from './notes.service';
+import { CreateNoteDto } from './dto/create-note.dto';
+import { UpdateNoteDto } from './dto/update-note.dto';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
@@ -19,40 +19,40 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import { Cards } from './domain/card';
+import { Note } from './domain/note';
 import { AuthGuard } from '@nestjs/passport';
 import {
   InfinityPaginationResponse,
   InfinityPaginationResponseDto,
 } from '../utils/dto/infinity-pagination-response.dto';
 import { infinityPagination } from '../utils/infinity-pagination';
-import { FindAllCardsDto } from './dto/find-all-cards.dto';
+import { FindAllNotesDto } from './dto/find-all-notes.dto';
 
-@ApiTags('Cards')
+@ApiTags('Notes')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 @Controller({
-  path: 'cards',
+  path: 'notes',
   version: '1',
 })
-export class CardsController {
-  constructor(private readonly cardsService: CardsService) {}
+export class NotesController {
+  constructor(private readonly notesService: NotesService) {}
 
   @Post()
   @ApiCreatedResponse({
-    type: Cards,
+    type: Note,
   })
-  create(@Body() createCardsDto: CreateCardsDto) {
-    return this.cardsService.create(createCardsDto);
+  create(@Body() createNoteDto: CreateNoteDto) {
+    return this.notesService.create(createNoteDto);
   }
 
   @Get()
   @ApiOkResponse({
-    type: InfinityPaginationResponse(Cards),
+    type: InfinityPaginationResponse(Note),
   })
   async findAll(
-    @Query() query: FindAllCardsDto,
-  ): Promise<InfinityPaginationResponseDto<Cards>> {
+    @Query() query: FindAllNotesDto,
+  ): Promise<InfinityPaginationResponseDto<Note>> {
     const page = query?.page ?? 1;
     let limit = query?.limit ?? 10;
     if (limit > 50) {
@@ -60,7 +60,7 @@ export class CardsController {
     }
 
     return infinityPagination(
-      await this.cardsService.findAllWithPagination({
+      await this.notesService.findAllWithPagination({
         paginationOptions: {
           page,
           limit,
@@ -77,10 +77,10 @@ export class CardsController {
     required: true,
   })
   @ApiOkResponse({
-    type: Cards,
+    type: Note,
   })
   findById(@Param('id') id: string) {
-    return this.cardsService.findById(id);
+    return this.notesService.findById(id);
   }
 
   @Patch(':id')
@@ -90,10 +90,10 @@ export class CardsController {
     required: true,
   })
   @ApiOkResponse({
-    type: Cards,
+    type: Note,
   })
-  update(@Param('id') id: string, @Body() updateCardsDto: UpdateCardsDto) {
-    return this.cardsService.update(id, updateCardsDto);
+  update(@Param('id') id: string, @Body() updateNoteDto: UpdateNoteDto) {
+    return this.notesService.update(id, updateNoteDto);
   }
 
   @Delete(':id')
@@ -103,6 +103,6 @@ export class CardsController {
     required: true,
   })
   remove(@Param('id') id: string) {
-    return this.cardsService.remove(id);
+    return this.notesService.remove(id);
   }
 }

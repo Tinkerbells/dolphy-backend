@@ -19,7 +19,7 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import { Decks } from './domain/decks';
+import { Decks } from './domain/deck';
 import { AuthGuard } from '@nestjs/passport';
 import {
   InfinityPaginationResponse,
