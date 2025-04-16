@@ -19,8 +19,6 @@ import { AllConfigType } from './config/config.type';
 import { SessionModule } from './session/session.module';
 import { MailerModule } from './mailer/mailer.module';
 import { TelegramAuthModule } from './telegram-auth/telegram-auth.module';
-import { CardsModule } from './cards/cards.module';
-import { DecksModule } from './decks/decks.module';
 
 import telegramConfig from './config/telegram-config';
 
@@ -31,14 +29,8 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   },
 });
 
-import { NotesModule } from './notes/notes.module';
-
-import { SchedulersModule } from './schedulers/schedulers.module';
-
 @Module({
   imports: [
-    SchedulersModule,
-    NotesModule,
     ConfigModule.forRoot({
       isGlobal: true,
       load: [
@@ -83,11 +75,7 @@ import { SchedulersModule } from './schedulers/schedulers.module';
     MailerModule,
     HomeModule,
     TelegramAuthModule,
-    DecksModule,
-    CardsModule,
     TelegramAuthModule,
-    DecksModule,
-    CardsModule,
   ],
 })
 export class AppModule {}
