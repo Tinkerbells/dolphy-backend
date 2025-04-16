@@ -29,8 +29,17 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   },
 });
 
+import { DecksModule } from './decks/decks.module';
+
+import { ReviewLogsModule } from './review-logs/review-logs.module';
+
+import { CardsModule } from './cards/cards.module';
+
 @Module({
   imports: [
+    CardsModule,
+    ReviewLogsModule,
+    DecksModule,
     ConfigModule.forRoot({
       isGlobal: true,
       load: [
