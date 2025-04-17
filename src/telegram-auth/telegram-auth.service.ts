@@ -123,9 +123,6 @@ export class TelegramAuthService {
 
   /**
    * Генерирует токены для аутентифицированного пользователя
-   *
-   * @param {Object} data - Данные пользователя и сессии
-   * @returns {Promise<{ token: string, refreshToken: string, tokenExpires: number }>} Токены
    */
   private async getTokensData(data: {
     id: User['id'];

@@ -20,6 +20,7 @@ import { SessionModule as AuthSessionModule } from './session/session.module';
 import { MailModule } from './mail/mail.module';
 import { MailerModule } from './mailer/mailer.module';
 import { HomeModule } from './home/home.module';
+import { TelegramAuthModule } from './telegram-auth/telegram-auth.module';
 
 // Модули для карточек
 import { DecksModule } from './decks/decks.module';
@@ -77,6 +78,7 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
     }),
 
     // Основные модули
+    TelegramAuthModule,
     UsersModule,
     FilesModule,
     AuthModule,

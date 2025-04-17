@@ -125,4 +125,18 @@ export class CardRelationalRepository implements CardRepository {
     // Мягкое удаление (soft delete)
     await this.update(id, { deleted: true });
   }
+  async findDueCardsByDeckId(deckId: string, now: Date): Promise<Card[]> {
+    const entities = await this.cardRepository
+      .createQueryBuilder('card')
+      .innerJoin('cards_to_decks', 'ctd', 'card.id = ctd.cardId')
+      .where('ctd.deckId = :deckId', { deckId })
+      .andWhere('card.due <= :now', { now })
+      .andWhere('card.suspended <= :now', { now })
+      .andWhere('card.deleted = :deleted', { deleted: false })
+      .orderBy('card.due', 'ASC')
+      .getMany();
+    console.log('@@@@@@@@@@', entities);
+
+    return entities.map((entity) => CardMapper.toDomain(entity));
+  }
 }

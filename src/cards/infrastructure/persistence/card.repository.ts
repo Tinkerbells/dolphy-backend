@@ -30,4 +30,5 @@ export abstract class CardRepository {
   ): Promise<Card | null>;
 
   abstract remove(id: Card['id']): Promise<void>;
+  abstract findDueCardsByDeckId(deckId: string, now: Date): Promise<Card[]>;
 }

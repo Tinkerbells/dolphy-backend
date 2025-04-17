@@ -243,4 +243,9 @@ export class CardsService {
   remove(id: Card['id']): Promise<void> {
     return this.cardRepository.remove(id);
   }
+
+  async findDueCardsByDeckId(deckId: string): Promise<Card[]> {
+    const now = new Date();
+    return this.cardRepository.findDueCardsByDeckId(deckId, now);
+  }
 }
