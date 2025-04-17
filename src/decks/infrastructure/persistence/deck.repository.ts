@@ -18,6 +18,8 @@ export abstract class DeckRepository {
 
   abstract findByIds(ids: Deck['id'][]): Promise<Deck[]>;
 
+  abstract findByUserId(userId: string): Promise<Deck[]>;
+
   abstract update(
     id: Deck['id'],
     payload: DeepPartial<Deck>,

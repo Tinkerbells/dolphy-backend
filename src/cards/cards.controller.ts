@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Query,
+  Request,
 } from '@nestjs/common';
 import { CardsService } from './cards.service';
 import { CreateCardDto } from './dto/create-card.dto';
@@ -27,6 +28,8 @@ import {
 } from '../utils/dto/infinity-pagination-response.dto';
 import { infinityPagination } from '../utils/infinity-pagination';
 import { FindAllCardsDto } from './dto/find-all-cards.dto';
+import { RatingType, ratings } from '../review-logs/domain/review-log';
+import { FsrsService } from '../fsrs/fsrs.service';
 
 @ApiTags('Cards')
 @ApiBearerAuth()
@@ -36,14 +39,25 @@ import { FindAllCardsDto } from './dto/find-all-cards.dto';
   version: '1',
 })
 export class CardsController {
-  constructor(private readonly cardsService: CardsService) {}
+  constructor(
+    private readonly cardsService: CardsService,
+    private readonly fsrsService: FsrsService,
+  ) {}
 
   @Post()
   @ApiCreatedResponse({
     type: Card,
   })
-  create(@Body() createCardDto: CreateCardDto) {
-    return this.cardsService.create(createCardDto);
+  create(@Body() createCardDto: CreateCardDto, @Request() req) {
+    return this.cardsService.create(createCardDto, req.user.id);
+  }
+
+  @Post('batch')
+  @ApiCreatedResponse({
+    type: [Card],
+  })
+  createBatch(@Body() createCardDtos: CreateCardDto[], @Request() req) {
+    return this.cardsService.createMany(createCardDtos, req.user.id);
   }
 
   @Get()
@@ -52,6 +66,7 @@ export class CardsController {
   })
   async findAll(
     @Query() query: FindAllCardsDto,
+    @Request() req,
   ): Promise<InfinityPaginationResponseDto<Card>> {
     const page = query?.page ?? 1;
     let limit = query?.limit ?? 10;
@@ -59,15 +74,24 @@ export class CardsController {
       limit = 50;
     }
 
-    return infinityPagination(
-      await this.cardsService.findAllWithPagination({
-        paginationOptions: {
-          page,
-          limit,
-        },
-      }),
-      { page, limit },
-    );
+    const cards = await this.cardsService.findAllWithPagination({
+      paginationOptions: {
+        page,
+        limit,
+      },
+      userId: req.user.id,
+      deckId: query.deckId,
+    });
+
+    return infinityPagination(cards, { page, limit });
+  }
+
+  @Get('due')
+  @ApiOkResponse({
+    type: [Card],
+  })
+  async findDue(@Request() req) {
+    return this.cardsService.findDueCards(req.user.id);
   }
 
   @Get(':id')
@@ -79,8 +103,38 @@ export class CardsController {
   @ApiOkResponse({
     type: Card,
   })
-  findById(@Param('id') id: string) {
-    return this.cardsService.findById(id);
+  findOne(@Param('id') id: string) {
+    return this.cardsService.findWithContent(id);
+  }
+
+  @Get(':id/preview')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  async preview(@Param('id') id: string) {
+    const card = await this.cardsService.findById(id);
+    if (!card) {
+      return null;
+    }
+
+    return this.fsrsService.previewRatings(card);
+  }
+
+  @Post(':id/grade')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  grade(@Param('id') id: string, @Body() body: { rating: RatingType }) {
+    // Проверяем, валидна ли оценка
+    if (!ratings.includes(body.rating)) {
+      throw new Error('Invalid rating');
+    }
+
+    return this.cardsService.grade(id, body.rating);
   }
 
   @Patch(':id')
@@ -96,6 +150,26 @@ export class CardsController {
     return this.cardsService.update(id, updateCardDto);
   }
 
+  @Post(':id/reset')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  reset(@Param('id') id: string) {
+    return this.cardsService.reset(id);
+  }
+
+  @Post(':id/suspend')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  suspend(@Param('id') id: string, @Body() body: { until: Date }) {
+    return this.cardsService.suspend(id, body.until);
+  }
+
   @Delete(':id')
   @ApiParam({
     name: 'id',
@@ -103,6 +177,16 @@ export class CardsController {
     required: true,
   })
   remove(@Param('id') id: string) {
-    return this.cardsService.remove(id);
+    return this.cardsService.softDelete(id);
+  }
+
+  @Post(':id/restore')
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+  })
+  restore(@Param('id') id: string) {
+    return this.cardsService.restore(id);
   }
 }

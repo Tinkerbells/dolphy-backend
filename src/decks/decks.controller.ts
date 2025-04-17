@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Query,
+  Request,
 } from '@nestjs/common';
 import { DecksService } from './decks.service';
 import { CreateDeckDto } from './dto/create-deck.dto';
@@ -42,8 +43,8 @@ export class DecksController {
   @ApiCreatedResponse({
     type: Deck,
   })
-  create(@Body() createDeckDto: CreateDeckDto) {
-    return this.decksService.create(createDeckDto);
+  create(@Body() createDeckDto: CreateDeckDto, @Request() req) {
+    return this.decksService.create(createDeckDto, req.user.id);
   }
 
   @Get()
@@ -52,6 +53,7 @@ export class DecksController {
   })
   async findAll(
     @Query() query: FindAllDecksDto,
+    @Request() req,
   ): Promise<InfinityPaginationResponseDto<Deck>> {
     const page = query?.page ?? 1;
     let limit = query?.limit ?? 10;
@@ -59,15 +61,11 @@ export class DecksController {
       limit = 50;
     }
 
-    return infinityPagination(
-      await this.decksService.findAllWithPagination({
-        paginationOptions: {
-          page,
-          limit,
-        },
-      }),
-      { page, limit },
-    );
+    // Получаем колоды текущего пользователя
+    const userId = req.user.id;
+    const decks = await this.decksService.findByUserId(userId);
+
+    return infinityPagination(decks, { page, limit });
   }
 
   @Get(':id')
@@ -79,7 +77,7 @@ export class DecksController {
   @ApiOkResponse({
     type: Deck,
   })
-  findById(@Param('id') id: string) {
+  findOne(@Param('id') id: string) {
     return this.decksService.findById(id);
   }
 
@@ -103,6 +101,6 @@ export class DecksController {
     required: true,
   })
   remove(@Param('id') id: string) {
-    return this.decksService.remove(id);
+    return this.decksService.softDelete(id);
   }
 }

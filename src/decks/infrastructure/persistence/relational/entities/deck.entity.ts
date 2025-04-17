@@ -1,4 +1,5 @@
 import {
+  Column,
   CreateDateColumn,
   Entity,
   PrimaryGeneratedColumn,
@@ -12,6 +13,18 @@ import { EntityRelationalHelper } from '../../../../../utils/relational-entity-h
 export class DeckEntity extends EntityRelationalHelper {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column()
+  name: string;
+
+  @Column({ default: '' })
+  description: string;
+
+  @Column({ default: false })
+  deleted: boolean;
+
+  @Column()
+  userId: string;
 
   @CreateDateColumn()
   createdAt: Date;

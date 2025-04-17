@@ -28,7 +28,7 @@ import {
 import { infinityPagination } from '../utils/infinity-pagination';
 import { FindAllReviewLogsDto } from './dto/find-all-review-logs.dto';
 
-@ApiTags('Reviewlogs')
+@ApiTags('ReviewLogs')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 @Controller({
@@ -59,15 +59,51 @@ export class ReviewLogsController {
       limit = 50;
     }
 
-    return infinityPagination(
-      await this.reviewLogsService.findAllWithPagination({
-        paginationOptions: {
-          page,
-          limit,
-        },
-      }),
-      { page, limit },
-    );
+    const reviewLogs = await this.reviewLogsService.findAllWithPagination({
+      paginationOptions: {
+        page,
+        limit,
+      },
+      cardId: query.cardId,
+    });
+
+    return infinityPagination(reviewLogs, { page, limit });
+  }
+
+  @Get('card/:cardId')
+  @ApiParam({
+    name: 'cardId',
+    type: String,
+    required: true,
+  })
+  @ApiOkResponse({
+    type: [ReviewLog],
+  })
+  findByCardId(@Param('cardId') cardId: string) {
+    return this.reviewLogsService.findByCardId(cardId);
+  }
+
+  @Get('card/:cardId/stats')
+  @ApiParam({
+    name: 'cardId',
+    type: String,
+    required: true,
+  })
+  getCardStats(@Param('cardId') cardId: string) {
+    return this.reviewLogsService.getCardStats(cardId);
+  }
+
+  @Get('card/:cardId/latest')
+  @ApiParam({
+    name: 'cardId',
+    type: String,
+    required: true,
+  })
+  @ApiOkResponse({
+    type: ReviewLog,
+  })
+  findLatestByCardId(@Param('cardId') cardId: string) {
+    return this.reviewLogsService.findLatestByCardId(cardId);
   }
 
   @Get(':id')
@@ -79,7 +115,7 @@ export class ReviewLogsController {
   @ApiOkResponse({
     type: ReviewLog,
   })
-  findById(@Param('id') id: string) {
+  findOne(@Param('id') id: string) {
     return this.reviewLogsService.findById(id);
   }
 
@@ -106,6 +142,6 @@ export class ReviewLogsController {
     required: true,
   })
   remove(@Param('id') id: string) {
-    return this.reviewLogsService.remove(id);
+    return this.reviewLogsService.softDelete(id);
   }
 }

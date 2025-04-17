@@ -25,20 +25,31 @@ export class ReviewLogRelationalRepository implements ReviewLogRepository {
 
   async findAllWithPagination({
     paginationOptions,
+    cardId,
   }: {
     paginationOptions: IPaginationOptions;
+    cardId?: string;
   }): Promise<ReviewLog[]> {
-    const entities = await this.reviewLogRepository.find({
-      skip: (paginationOptions.page - 1) * paginationOptions.limit,
-      take: paginationOptions.limit,
-    });
+    const queryBuilder = this.reviewLogRepository
+      .createQueryBuilder('review_log')
+      .where('review_log.deleted = :deleted', { deleted: false });
+
+    if (cardId) {
+      queryBuilder.andWhere('review_log.cardId = :cardId', { cardId });
+    }
+
+    const entities = await queryBuilder
+      .orderBy('review_log.review', 'DESC')
+      .skip((paginationOptions.page - 1) * paginationOptions.limit)
+      .take(paginationOptions.limit)
+      .getMany();
 
     return entities.map((entity) => ReviewLogMapper.toDomain(entity));
   }
 
   async findById(id: ReviewLog['id']): Promise<NullableType<ReviewLog>> {
     const entity = await this.reviewLogRepository.findOne({
-      where: { id },
+      where: { id, deleted: false },
     });
 
     return entity ? ReviewLogMapper.toDomain(entity) : null;
@@ -46,10 +57,31 @@ export class ReviewLogRelationalRepository implements ReviewLogRepository {
 
   async findByIds(ids: ReviewLog['id'][]): Promise<ReviewLog[]> {
     const entities = await this.reviewLogRepository.find({
-      where: { id: In(ids) },
+      where: {
+        id: In(ids),
+        deleted: false,
+      },
     });
 
     return entities.map((entity) => ReviewLogMapper.toDomain(entity));
+  }
+
+  async findByCardId(cardId: string): Promise<ReviewLog[]> {
+    const entities = await this.reviewLogRepository.find({
+      where: { cardId, deleted: false },
+      order: { review: 'DESC' },
+    });
+
+    return entities.map((entity) => ReviewLogMapper.toDomain(entity));
+  }
+
+  async findLatestByCardId(cardId: string): Promise<NullableType<ReviewLog>> {
+    const entity = await this.reviewLogRepository.findOne({
+      where: { cardId, deleted: false },
+      order: { review: 'DESC' },
+    });
+
+    return entity ? ReviewLogMapper.toDomain(entity) : null;
   }
 
   async update(
@@ -61,7 +93,7 @@ export class ReviewLogRelationalRepository implements ReviewLogRepository {
     });
 
     if (!entity) {
-      throw new Error('Record not found');
+      throw new Error('ReviewLog not found');
     }
 
     const updatedEntity = await this.reviewLogRepository.save(
@@ -77,6 +109,14 @@ export class ReviewLogRelationalRepository implements ReviewLogRepository {
   }
 
   async remove(id: ReviewLog['id']): Promise<void> {
-    await this.reviewLogRepository.delete(id);
+    // Мягкое удаление (soft delete)
+    const entity = await this.reviewLogRepository.findOne({
+      where: { id },
+    });
+
+    if (entity) {
+      entity.deleted = true;
+      await this.reviewLogRepository.save(entity);
+    }
   }
 }

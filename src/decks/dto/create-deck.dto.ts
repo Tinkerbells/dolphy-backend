@@ -1,3 +1,25 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+
 export class CreateDeckDto {
-  // Don't forget to use the class-validator decorators in the DTO properties.
+  @ApiProperty({
+    example: 'Японский язык',
+    description: 'Название колоды',
+  })
+  @IsString()
+  @IsNotEmpty({ message: 'Название колоды обязательно' })
+  @MaxLength(100, {
+    message: 'Название колоды должно быть не более 100 символов',
+  })
+  name: string;
+
+  @ApiProperty({
+    example: 'Колода для изучения японских иероглифов',
+    description: 'Описание колоды',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  @MaxLength(500, { message: 'Описание должно быть не более 500 символов' })
+  description?: string;
 }

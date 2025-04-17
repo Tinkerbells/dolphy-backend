@@ -31,6 +31,7 @@ export class DeckRelationalRepository implements DeckRepository {
     const entities = await this.deckRepository.find({
       skip: (paginationOptions.page - 1) * paginationOptions.limit,
       take: paginationOptions.limit,
+      where: { deleted: false },
     });
 
     return entities.map((entity) => DeckMapper.toDomain(entity));
@@ -38,7 +39,7 @@ export class DeckRelationalRepository implements DeckRepository {
 
   async findById(id: Deck['id']): Promise<NullableType<Deck>> {
     const entity = await this.deckRepository.findOne({
-      where: { id },
+      where: { id, deleted: false },
     });
 
     return entity ? DeckMapper.toDomain(entity) : null;
@@ -46,7 +47,21 @@ export class DeckRelationalRepository implements DeckRepository {
 
   async findByIds(ids: Deck['id'][]): Promise<Deck[]> {
     const entities = await this.deckRepository.find({
-      where: { id: In(ids) },
+      where: {
+        id: In(ids),
+        deleted: false,
+      },
+    });
+
+    return entities.map((entity) => DeckMapper.toDomain(entity));
+  }
+
+  async findByUserId(userId: string): Promise<Deck[]> {
+    const entities = await this.deckRepository.find({
+      where: {
+        userId,
+        deleted: false,
+      },
     });
 
     return entities.map((entity) => DeckMapper.toDomain(entity));
@@ -58,7 +73,7 @@ export class DeckRelationalRepository implements DeckRepository {
     });
 
     if (!entity) {
-      throw new Error('Record not found');
+      throw new Error('Deck not found');
     }
 
     const updatedEntity = await this.deckRepository.save(
@@ -74,6 +89,7 @@ export class DeckRelationalRepository implements DeckRepository {
   }
 
   async remove(id: Deck['id']): Promise<void> {
-    await this.deckRepository.delete(id);
+    // Мягкое удаление (soft delete)
+    await this.update(id, { deleted: true });
   }
 }

@@ -1,69 +1,155 @@
-import {
-  // common
-  Injectable,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CreateReviewLogDto } from './dto/create-review-log.dto';
 import { UpdateReviewLogDto } from './dto/update-review-log.dto';
 import { ReviewLogRepository } from './infrastructure/persistence/review-log.repository';
 import { IPaginationOptions } from '../utils/types/pagination-options';
 import { ReviewLog } from './domain/review-log';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class ReviewLogsService {
-  constructor(
-    // Dependencies here
-    private readonly reviewLogRepository: ReviewLogRepository,
-  ) {}
+  constructor(private readonly reviewLogRepository: ReviewLogRepository) {}
 
-  async create(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    createReviewLogDto: CreateReviewLogDto,
-  ) {
-    // Do not remove comment below.
-    // <creating-property />
+  async create(createReviewLogDto: CreateReviewLogDto): Promise<ReviewLog> {
+    const newReviewLog = new ReviewLog();
+    newReviewLog.id = uuidv4();
+    newReviewLog.cardId = createReviewLogDto.cardId;
+    newReviewLog.grade = createReviewLogDto.grade;
+    newReviewLog.state = createReviewLogDto.state;
+    newReviewLog.due = createReviewLogDto.due;
+    newReviewLog.stability = createReviewLogDto.stability;
+    newReviewLog.difficulty = createReviewLogDto.difficulty;
+    newReviewLog.elapsed_days = createReviewLogDto.elapsed_days;
+    newReviewLog.last_elapsed_days = createReviewLogDto.last_elapsed_days;
+    newReviewLog.scheduled_days = createReviewLogDto.scheduled_days;
+    newReviewLog.review = createReviewLogDto.review;
+    newReviewLog.duration = createReviewLogDto.duration;
+    newReviewLog.deleted = false;
 
-    return this.reviewLogRepository.create({
-      // Do not remove comment below.
-      // <creating-property-payload />
-    });
+    return this.reviewLogRepository.create(newReviewLog);
   }
 
   findAllWithPagination({
     paginationOptions,
+    cardId,
   }: {
     paginationOptions: IPaginationOptions;
-  }) {
+    cardId?: string;
+  }): Promise<ReviewLog[]> {
     return this.reviewLogRepository.findAllWithPagination({
-      paginationOptions: {
-        page: paginationOptions.page,
-        limit: paginationOptions.limit,
-      },
+      paginationOptions,
+      cardId,
     });
   }
 
-  findById(id: ReviewLog['id']) {
+  findById(id: ReviewLog['id']): Promise<ReviewLog | null> {
     return this.reviewLogRepository.findById(id);
   }
 
-  findByIds(ids: ReviewLog['id'][]) {
+  findByIds(ids: ReviewLog['id'][]): Promise<ReviewLog[]> {
     return this.reviewLogRepository.findByIds(ids);
+  }
+
+  findByCardId(cardId: string): Promise<ReviewLog[]> {
+    return this.reviewLogRepository.findByCardId(cardId);
+  }
+
+  findLatestByCardId(cardId: string): Promise<ReviewLog | null> {
+    return this.reviewLogRepository.findLatestByCardId(cardId);
   }
 
   async update(
     id: ReviewLog['id'],
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     updateReviewLogDto: UpdateReviewLogDto,
-  ) {
-    // Do not remove comment below.
-    // <updating-property />
+  ): Promise<ReviewLog | null> {
+    const updateData: Partial<ReviewLog> = {};
 
-    return this.reviewLogRepository.update(id, {
-      // Do not remove comment below.
-      // <updating-property-payload />
-    });
+    if (updateReviewLogDto.grade !== undefined) {
+      updateData.grade = updateReviewLogDto.grade;
+    }
+
+    if (updateReviewLogDto.state !== undefined) {
+      updateData.state = updateReviewLogDto.state;
+    }
+
+    if (updateReviewLogDto.due !== undefined) {
+      updateData.due = updateReviewLogDto.due;
+    }
+
+    if (updateReviewLogDto.stability !== undefined) {
+      updateData.stability = updateReviewLogDto.stability;
+    }
+
+    if (updateReviewLogDto.difficulty !== undefined) {
+      updateData.difficulty = updateReviewLogDto.difficulty;
+    }
+
+    if (updateReviewLogDto.elapsed_days !== undefined) {
+      updateData.elapsed_days = updateReviewLogDto.elapsed_days;
+    }
+
+    if (updateReviewLogDto.last_elapsed_days !== undefined) {
+      updateData.last_elapsed_days = updateReviewLogDto.last_elapsed_days;
+    }
+
+    if (updateReviewLogDto.scheduled_days !== undefined) {
+      updateData.scheduled_days = updateReviewLogDto.scheduled_days;
+    }
+
+    if (updateReviewLogDto.review !== undefined) {
+      updateData.review = updateReviewLogDto.review;
+    }
+
+    if (updateReviewLogDto.duration !== undefined) {
+      updateData.duration = updateReviewLogDto.duration;
+    }
+
+    return this.reviewLogRepository.update(id, updateData);
   }
 
-  remove(id: ReviewLog['id']) {
+  async softDelete(id: ReviewLog['id']): Promise<void> {
+    await this.reviewLogRepository.update(id, { deleted: true });
+  }
+
+  remove(id: ReviewLog['id']): Promise<void> {
     return this.reviewLogRepository.remove(id);
+  }
+
+  async getCardStats(cardId: string): Promise<{
+    totalReviews: number;
+    correctReviews: number;
+    averageDuration: number;
+    lastReview: Date | null;
+  }> {
+    const logs = await this.reviewLogRepository.findByCardId(cardId);
+
+    if (logs.length === 0) {
+      return {
+        totalReviews: 0,
+        correctReviews: 0,
+        averageDuration: 0,
+        lastReview: null,
+      };
+    }
+
+    // Подсчет статистики
+    const totalReviews = logs.length;
+    const correctReviews = logs.filter(
+      (log) => log.grade === 'Good' || log.grade === 'Easy',
+    ).length;
+
+    const totalDuration = logs.reduce((sum, log) => sum + log.duration, 0);
+    const averageDuration = totalDuration / totalReviews;
+
+    // Сортировка журналов по времени повторения (от новых к старым)
+    logs.sort((a, b) => b.review.getTime() - a.review.getTime());
+    const lastReview = logs[0].review;
+
+    return {
+      totalReviews,
+      correctReviews,
+      averageDuration,
+      lastReview,
+    };
   }
 }

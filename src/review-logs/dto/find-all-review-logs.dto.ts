@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumber, IsOptional } from 'class-validator';
+import { IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class FindAllReviewLogsDto {
@@ -14,4 +14,13 @@ export class FindAllReviewLogsDto {
   @IsNumber()
   @IsOptional()
   limit?: number;
+
+  @ApiPropertyOptional({
+    description: 'Идентификатор карточки',
+    type: String,
+  })
+  @IsString()
+  @IsUUID('4')
+  @IsOptional()
+  cardId?: string;
 }
