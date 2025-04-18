@@ -26,11 +26,7 @@ export class CardsService {
     const newCard = new Card();
     newCard.id = uuidv4();
     newCard.userId = userId;
-
-    // Если указана колода, присваиваем карточку к ней
-    if (createCardDto.deckId) {
-      newCard.deckId = createCardDto.deckId;
-    }
+    newCard.deckId = createCardDto.deckId;
 
     // Инициализируем карточку с помощью FSRS
     const now = new Date();

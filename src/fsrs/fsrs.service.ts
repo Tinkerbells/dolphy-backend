@@ -30,7 +30,7 @@ export class FsrsService {
    */
   initializeCard(card: Card, now: Date): Card {
     // Создаем пустую карточку с помощью ts-fsrs
-    const emptyFsrsCard = createEmptyCard(now);
+    const emptyFsrsCard = createEmptyCard();
 
     // Копируем данные из пустой карточки FSRS в нашу доменную карточку
     card.due = emptyFsrsCard.due;
@@ -60,7 +60,7 @@ export class FsrsService {
       reps: card.reps,
       lapses: card.lapses,
       state: this.getStateEnum(card.state),
-      last_review: card.last_review || undefined,
+      last_review: card.last_review,
     };
   }
 
@@ -125,7 +125,7 @@ export class FsrsService {
       card.scheduled_days = result.card.scheduled_days;
       card.reps = result.card.reps;
       card.lapses = result.card.lapses;
-      card.state = states[result.card.state] as StateType;
+      card.state = states[result.card.state];
       card.last_review = now;
     }
 
@@ -188,7 +188,7 @@ export class FsrsService {
       fsrsCard,
       now,
       false,
-    ) as number;
+    );
 
     return retention;
   }
