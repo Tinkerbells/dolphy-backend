@@ -1,18 +1,14 @@
-import {
-  // common
-  Module,
-} from '@nestjs/common';
-import { StatisticsService } from './statistics.service';
+import { Module } from '@nestjs/common';
 import { StatisticsController } from './statistics.controller';
-import { RelationalStatisticPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
+import { StatisticsService } from './statistics.service';
+import { DecksModule } from '../decks/decks.module';
+import { CardsModule } from '../cards/cards.module';
+import { ReviewLogsModule } from '../review-logs/review-logs.module';
 
 @Module({
-  imports: [
-    // import modules, etc.
-    RelationalStatisticPersistenceModule,
-  ],
+  imports: [DecksModule, CardsModule, ReviewLogsModule],
   controllers: [StatisticsController],
   providers: [StatisticsService],
-  exports: [StatisticsService, RelationalStatisticPersistenceModule],
+  exports: [StatisticsService],
 })
 export class StatisticsModule {}

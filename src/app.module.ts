@@ -46,7 +46,6 @@ import { StatisticsModule } from './statistics/statistics.module';
 
 @Module({
   imports: [
-    StatisticsModule,
     NotesModule,
     // Конфигурация
     ConfigModule.forRoot({
@@ -84,6 +83,7 @@ import { StatisticsModule } from './statistics/statistics.module';
     }),
 
     // Основные модули
+    StatisticsModule,
     TelegramAuthModule,
     UsersModule,
     FilesModule,

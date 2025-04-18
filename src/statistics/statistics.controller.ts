@@ -1,32 +1,23 @@
 import {
   Controller,
   Get,
-  Post,
-  Body,
-  Patch,
   Param,
-  Delete,
   UseGuards,
-  Query,
+  Request,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { StatisticsService } from './statistics.service';
-import { CreateStatisticDto } from './dto/create-statistic.dto';
-import { UpdateStatisticDto } from './dto/update-statistic.dto';
 import {
   ApiBearerAuth,
-  ApiCreatedResponse,
   ApiOkResponse,
   ApiParam,
   ApiTags,
+  ApiOperation,
 } from '@nestjs/swagger';
-import { Statistic } from './domain/statistic';
 import { AuthGuard } from '@nestjs/passport';
-import {
-  InfinityPaginationResponse,
-  InfinityPaginationResponseDto,
-} from '../utils/dto/infinity-pagination-response.dto';
-import { infinityPagination } from '../utils/infinity-pagination';
-import { FindAllStatisticsDto } from './dto/find-all-statistics.dto';
+import { DeckStatisticsDto } from './dto/deck-statistics.dto';
+import { UserStatisticsDto } from './dto/user-statistics.dto';
 
 @ApiTags('Statistics')
 @ApiBearerAuth()
@@ -38,74 +29,33 @@ import { FindAllStatisticsDto } from './dto/find-all-statistics.dto';
 export class StatisticsController {
   constructor(private readonly statisticsService: StatisticsService) {}
 
-  @Post()
-  @ApiCreatedResponse({
-    type: Statistic,
-  })
-  create(@Body() createStatisticDto: CreateStatisticDto) {
-    return this.statisticsService.create(createStatisticDto);
-  }
-
-  @Get()
+  @Get('user')
+  @ApiOperation({ summary: 'Получить статистику пользователя по всем колодам' })
   @ApiOkResponse({
-    type: InfinityPaginationResponse(Statistic),
+    type: UserStatisticsDto,
+    description: 'Статистика пользователя по всем колодам',
   })
-  async findAll(
-    @Query() query: FindAllStatisticsDto,
-  ): Promise<InfinityPaginationResponseDto<Statistic>> {
-    const page = query?.page ?? 1;
-    let limit = query?.limit ?? 10;
-    if (limit > 50) {
-      limit = 50;
-    }
-
-    return infinityPagination(
-      await this.statisticsService.findAllWithPagination({
-        paginationOptions: {
-          page,
-          limit,
-        },
-      }),
-      { page, limit },
-    );
+  @HttpCode(HttpStatus.OK)
+  async getUserStatistics(@Request() req): Promise<UserStatisticsDto> {
+    return this.statisticsService.getUserStatistics(req.user.id);
   }
 
-  @Get(':id')
+  @Get('deck/:deckId')
+  @ApiOperation({ summary: 'Получить статистику по конкретной колоде' })
   @ApiParam({
-    name: 'id',
+    name: 'deckId',
     type: String,
     required: true,
+    description: 'ID колоды',
   })
   @ApiOkResponse({
-    type: Statistic,
+    type: DeckStatisticsDto,
+    description: 'Статистика колоды',
   })
-  findById(@Param('id') id: string) {
-    return this.statisticsService.findById(id);
-  }
-
-  @Patch(':id')
-  @ApiParam({
-    name: 'id',
-    type: String,
-    required: true,
-  })
-  @ApiOkResponse({
-    type: Statistic,
-  })
-  update(
-    @Param('id') id: string,
-    @Body() updateStatisticDto: UpdateStatisticDto,
-  ) {
-    return this.statisticsService.update(id, updateStatisticDto);
-  }
-
-  @Delete(':id')
-  @ApiParam({
-    name: 'id',
-    type: String,
-    required: true,
-  })
-  remove(@Param('id') id: string) {
-    return this.statisticsService.remove(id);
+  @HttpCode(HttpStatus.OK)
+  async getDeckStatistics(
+    @Param('deckId') deckId: string,
+  ): Promise<DeckStatisticsDto> {
+    return this.statisticsService.getDeckStatistics(deckId);
   }
 }
