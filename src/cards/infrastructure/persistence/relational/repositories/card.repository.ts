@@ -125,18 +125,40 @@ export class CardRelationalRepository implements CardRepository {
     // Мягкое удаление (soft delete)
     await this.update(id, { deleted: true });
   }
-  async findDueCardsByDeckId(deckId: string, now: Date): Promise<Card[]> {
-    const entities = await this.cardRepository
-      .createQueryBuilder('card')
-      .innerJoin('cards_to_decks', 'ctd', 'card.id = ctd.cardId')
-      .where('ctd.deckId = :deckId', { deckId })
-      .andWhere('card.due <= :now', { now })
-      .andWhere('card.suspended <= :now', { now })
-      .andWhere('card.deleted = :deleted', { deleted: false })
-      .orderBy('card.due', 'ASC')
-      .getMany();
-    console.log('@@@@@@@@@@', entities);
 
-    return entities.map((entity) => CardMapper.toDomain(entity));
+  async findDueCardsByDeckId(deckId: string, now: Date): Promise<Card[]> {
+    try {
+      // Подход в два этапа для надежности
+      // 1. Сначала получим все cardIds из колоды
+      const cardsToDecks = await this.cardRepository.manager.query(
+        `SELECT "cardId" FROM cards_to_decks WHERE "deckId" = $1`,
+        [deckId],
+      );
+
+      if (!cardsToDecks.length) {
+        return [];
+      }
+
+      // Извлекаем ID карточек
+      const cardIds = cardsToDecks.map((row) => row.cardId);
+
+      // 2. Теперь получаем карточки, которые подлежат повторению
+      const entities = await this.cardRepository.find({
+        where: {
+          id: In(cardIds),
+          due: LessThanOrEqual(now),
+          suspended: LessThanOrEqual(now),
+          deleted: false,
+        },
+        order: {
+          due: 'ASC',
+        },
+      });
+
+      return entities.map((entity) => CardMapper.toDomain(entity));
+    } catch (error) {
+      console.error('Ошибка в findDueCardsByDeckId:', error);
+      throw error;
+    }
   }
 }

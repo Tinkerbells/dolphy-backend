@@ -11,13 +11,14 @@ import {
   Rating,
   State,
   createEmptyCard,
+  FSRS,
 } from 'ts-fsrs';
 import { v4 as uuidv4 } from 'uuid';
 import { ReviewLogRepository } from '../review-logs/infrastructure/persistence/review-log.repository';
 
 @Injectable()
 export class FsrsService {
-  private readonly fsrsInstance;
+  private readonly fsrsInstance: FSRS;
 
   constructor(private readonly reviewLogRepository: ReviewLogRepository) {
     // Инициализация с параметрами по умолчанию
@@ -39,10 +40,9 @@ export class FsrsService {
     card.scheduled_days = emptyFsrsCard.scheduled_days;
     card.reps = emptyFsrsCard.reps;
     card.lapses = emptyFsrsCard.lapses;
-    card.state = states[emptyFsrsCard.state] as StateType;
+    card.state = states[emptyFsrsCard.state];
     card.last_review = emptyFsrsCard.last_review;
     card.suspended = now;
-    card.deleted = false;
 
     return card;
   }
