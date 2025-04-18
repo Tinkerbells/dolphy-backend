@@ -18,8 +18,15 @@ export abstract class NoteRepository {
 
   abstract findByIds(ids: Note['id'][]): Promise<Note[]>;
 
+  abstract findByCardId(cardId: string): Promise<NullableType<Note>>;
+
   abstract update(
     id: Note['id'],
+    payload: DeepPartial<Note>,
+  ): Promise<Note | null>;
+
+  abstract updateByCardId(
+    cardId: string,
     payload: DeepPartial<Note>,
   ): Promise<Note | null>;
 

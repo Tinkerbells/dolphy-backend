@@ -7,26 +7,26 @@ import {
 import { CreateCardDto } from './dto/create-card.dto';
 import { UpdateCardDto } from './dto/update-card.dto';
 import { CardRepository } from './infrastructure/persistence/card.repository';
-import { CardContentRepository } from './infrastructure/persistence/card-content.repository';
 import { IPaginationOptions } from '../utils/types/pagination-options';
 import { Card, StateType, states } from './domain/card';
-import { CardContent } from './domain/card-content';
 import { v4 as uuidv4 } from 'uuid';
 import { FsrsService } from '../fsrs/fsrs.service';
 import { RatingType } from '../review-logs/domain/review-log';
+import { NoteRepository } from 'src/notes/infrastructure/persistence/note.repository';
+import { Note } from 'src/notes/domain/note';
 
 @Injectable()
 export class CardsService {
   constructor(
     private readonly cardRepository: CardRepository,
-    private readonly cardContentRepository: CardContentRepository,
+    private readonly noteRepository: NoteRepository,
     private readonly fsrsService: FsrsService,
   ) {}
 
   async create(
     createCardDto: CreateCardDto,
     userId: string,
-  ): Promise<{ card: Card; cardContent: CardContent }> {
+  ): Promise<{ card: Card; note: Note }> {
     // Создаем карточку с начальными параметрами FSRS
     const newCard = new Card();
     newCard.id = uuidv4();
@@ -38,38 +38,35 @@ export class CardsService {
     const initializedCard = this.fsrsService.initializeCard(newCard, now);
 
     // Создаем содержимое карточки
-    const newCardContent = new CardContent();
-    newCardContent.id = uuidv4();
-    newCardContent.cardId = initializedCard.id;
-    newCardContent.question = createCardDto.question;
-    newCardContent.answer = createCardDto.answer;
-    newCardContent.deleted = false;
+    const cardNote = new Note();
+    cardNote.id = uuidv4();
+    cardNote.cardId = initializedCard.id;
+    cardNote.question = createCardDto.question;
+    cardNote.answer = createCardDto.answer;
+    cardNote.deleted = false;
 
     // Если есть метаданные, добавляем их
     if (createCardDto.metadata) {
-      newCardContent.source = createCardDto.metadata.source;
-      newCardContent.sourceId = createCardDto.metadata.sourceId;
-      newCardContent.extend = createCardDto.metadata;
+      cardNote.extend = createCardDto.metadata;
     } else {
-      newCardContent.source = 'manual';
+      cardNote.source = 'manual';
     }
 
     // Сохраняем карточку и ее содержимое
     const savedCard = await this.cardRepository.create(initializedCard);
-    const savedCardContent =
-      await this.cardContentRepository.create(newCardContent);
+    const savedCardNote = await this.noteRepository.create(cardNote);
 
     return {
       card: savedCard,
-      cardContent: savedCardContent,
+      note: savedCardNote,
     };
   }
 
   async createMany(
     createCardDtos: CreateCardDto[],
     userId: string,
-  ): Promise<{ card: Card; cardContent: CardContent }[]> {
-    const results: { card: Card; cardContent: CardContent }[] = [];
+  ): Promise<{ card: Card; note: Note }[]> {
+    const results: { card: Card; note: Note }[] = [];
 
     for (const dto of createCardDtos) {
       const result = await this.create(dto, userId);
@@ -101,18 +98,18 @@ export class CardsService {
 
   async findWithContent(
     id: Card['id'],
-  ): Promise<{ card: Card; content: CardContent } | null> {
+  ): Promise<{ card: Card; note: Note } | null> {
     const card = await this.cardRepository.findById(id);
     if (!card) {
       return null;
     }
 
-    const content = await this.cardContentRepository.findByCardId(id);
-    if (!content) {
+    const note = await this.noteRepository.findByCardId(id);
+    if (!note) {
       return null;
     }
 
-    return { card, content };
+    return { card, note };
   }
 
   findByIds(ids: Card['id'][]): Promise<Card[]> {
@@ -144,13 +141,13 @@ export class CardsService {
   async update(
     id: Card['id'],
     updateCardDto: UpdateCardDto,
-  ): Promise<{ card: Card; cardContent: CardContent } | null> {
+  ): Promise<{ card: Card; note: Note } | null> {
     const card = await this.cardRepository.findById(id);
     if (!card) {
       return null;
     }
 
-    const cardContent = await this.cardContentRepository.findByCardId(id);
+    const cardContent = await this.noteRepository.findByCardId(id);
     if (!cardContent) {
       return null;
     }
@@ -166,8 +163,6 @@ export class CardsService {
 
     // Если есть метаданные, обновляем их
     if (updateCardDto.metadata) {
-      cardContent.source = updateCardDto.metadata.source;
-      cardContent.sourceId = updateCardDto.metadata.sourceId;
       cardContent.extend = updateCardDto.metadata;
     }
 
@@ -177,18 +172,18 @@ export class CardsService {
       await this.cardRepository.update(id, { deckId: updateCardDto.deckId });
     }
 
-    const updatedContent = await this.cardContentRepository.update(
+    const updatedNote = await this.noteRepository.update(
       cardContent.id,
       cardContent,
     );
 
-    if (!updatedContent) {
+    if (!updatedNote) {
       return null;
     }
 
     return {
       card,
-      cardContent: updatedContent,
+      note: updatedNote,
     };
   }
 
@@ -318,9 +313,9 @@ export class CardsService {
     await this.cardRepository.update(id, { deleted: true });
 
     // Также отмечаем содержимое карточки как удаленное
-    const cardContent = await this.cardContentRepository.findByCardId(id);
+    const cardContent = await this.noteRepository.findByCardId(id);
     if (cardContent) {
-      await this.cardContentRepository.update(cardContent.id, {
+      await this.noteRepository.update(cardContent.id, {
         deleted: true,
       });
     }
@@ -330,9 +325,9 @@ export class CardsService {
     await this.cardRepository.update(id, { deleted: false });
 
     // Также восстанавливаем содержимое карточки
-    const cardContent = await this.cardContentRepository.findByCardId(id);
+    const cardContent = await this.noteRepository.findByCardId(id);
     if (cardContent) {
-      await this.cardContentRepository.update(cardContent.id, {
+      await this.noteRepository.update(cardContent.id, {
         deleted: false,
       });
     }

@@ -5,6 +5,11 @@ export class NoteMapper {
   static toDomain(raw: NoteEntity): Note {
     const domainEntity = new Note();
     domainEntity.id = raw.id;
+    domainEntity.cardId = raw.cardId;
+    domainEntity.question = raw.question;
+    domainEntity.answer = raw.answer;
+    domainEntity.extend = raw.extend;
+    domainEntity.deleted = raw.deleted;
     domainEntity.createdAt = raw.createdAt;
     domainEntity.updatedAt = raw.updatedAt;
 
@@ -16,6 +21,11 @@ export class NoteMapper {
     if (domainEntity.id) {
       persistenceEntity.id = domainEntity.id;
     }
+    persistenceEntity.cardId = domainEntity.cardId;
+    persistenceEntity.question = domainEntity.question;
+    persistenceEntity.answer = domainEntity.answer;
+    persistenceEntity.extend = domainEntity.extend;
+    persistenceEntity.deleted = domainEntity.deleted;
     persistenceEntity.createdAt = domainEntity.createdAt;
     persistenceEntity.updatedAt = domainEntity.updatedAt;
 

@@ -31,6 +31,7 @@ export class NoteRelationalRepository implements NoteRepository {
     const entities = await this.noteRepository.find({
       skip: (paginationOptions.page - 1) * paginationOptions.limit,
       take: paginationOptions.limit,
+      where: { deleted: false },
     });
 
     return entities.map((entity) => NoteMapper.toDomain(entity));
@@ -38,7 +39,7 @@ export class NoteRelationalRepository implements NoteRepository {
 
   async findById(id: Note['id']): Promise<NullableType<Note>> {
     const entity = await this.noteRepository.findOne({
-      where: { id },
+      where: { id, deleted: false },
     });
 
     return entity ? NoteMapper.toDomain(entity) : null;
@@ -46,10 +47,21 @@ export class NoteRelationalRepository implements NoteRepository {
 
   async findByIds(ids: Note['id'][]): Promise<Note[]> {
     const entities = await this.noteRepository.find({
-      where: { id: In(ids) },
+      where: {
+        id: In(ids),
+        deleted: false,
+      },
     });
 
     return entities.map((entity) => NoteMapper.toDomain(entity));
+  }
+
+  async findByCardId(cardId: string): Promise<NullableType<Note>> {
+    const entity = await this.noteRepository.findOne({
+      where: { cardId, deleted: false },
+    });
+
+    return entity ? NoteMapper.toDomain(entity) : null;
   }
 
   async update(id: Note['id'], payload: Partial<Note>): Promise<Note> {
@@ -58,7 +70,28 @@ export class NoteRelationalRepository implements NoteRepository {
     });
 
     if (!entity) {
-      throw new Error('Record not found');
+      throw new Error('Note not found');
+    }
+
+    const updatedEntity = await this.noteRepository.save(
+      this.noteRepository.create(
+        NoteMapper.toPersistence({
+          ...NoteMapper.toDomain(entity),
+          ...payload,
+        }),
+      ),
+    );
+
+    return NoteMapper.toDomain(updatedEntity);
+  }
+
+  async updateByCardId(cardId: string, payload: Partial<Note>): Promise<Note> {
+    const entity = await this.noteRepository.findOne({
+      where: { cardId },
+    });
+
+    if (!entity) {
+      throw new Error('Note not found for card');
     }
 
     const updatedEntity = await this.noteRepository.save(
@@ -74,6 +107,14 @@ export class NoteRelationalRepository implements NoteRepository {
   }
 
   async remove(id: Note['id']): Promise<void> {
-    await this.noteRepository.delete(id);
+    // Мягкое удаление (soft delete)
+    const entity = await this.noteRepository.findOne({
+      where: { id },
+    });
+
+    if (entity) {
+      entity.deleted = true;
+      await this.noteRepository.save(entity);
+    }
   }
 }

@@ -1,5 +1,5 @@
+import { Note } from 'src/notes/domain/note';
 import { Card } from '../cards/domain/card';
-import { CardContent } from '../cards/domain/card-content';
 import { RatingType } from '../review-logs/domain/review-log';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -10,10 +10,8 @@ export function newCardWithContent(
   userId: string,
   question: string,
   answer: string,
-  source: string = 'manual',
-  sourceId?: string,
   metadata?: any,
-): { card: Card; cardContent: CardContent } {
+): { card: Card; note: Note } {
   const cardId = uuidv4();
   const now = new Date();
 
@@ -34,18 +32,16 @@ export function newCardWithContent(
   card.createdAt = now;
 
   // Создаем содержимое карточки
-  const cardContent = new CardContent();
-  cardContent.id = uuidv4();
-  cardContent.cardId = cardId;
-  cardContent.question = question;
-  cardContent.answer = answer;
-  cardContent.source = source;
-  cardContent.sourceId = sourceId;
-  cardContent.extend = metadata || null;
-  cardContent.deleted = false;
-  cardContent.createdAt = now;
+  const note = new Note();
+  note.id = uuidv4();
+  note.cardId = cardId;
+  note.question = question;
+  note.answer = answer;
+  note.extend = metadata || null;
+  note.deleted = false;
+  note.createdAt = now;
 
-  return { card, cardContent };
+  return { card, note };
 }
 
 /**
