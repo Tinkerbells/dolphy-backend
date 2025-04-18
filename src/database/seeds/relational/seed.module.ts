@@ -7,6 +7,9 @@ import { TypeOrmConfigService } from '../../typeorm-config.service';
 import { RoleSeedModule } from './role/role-seed.module';
 import { StatusSeedModule } from './status/status-seed.module';
 import { UserSeedModule } from './user/user-seed.module';
+import { DeckSeedModule } from './deck/deck-seed.module';
+import { CardSeedModule } from './card/card-seed.module';
+import { NoteSeedModule } from './note/note-seed.module';
 import databaseConfig from '../../config/database.config';
 import appConfig from '../../../config/app.config';
 
@@ -15,6 +18,9 @@ import appConfig from '../../../config/app.config';
     RoleSeedModule,
     StatusSeedModule,
     UserSeedModule,
+    DeckSeedModule,
+    CardSeedModule,
+    NoteSeedModule,
     ConfigModule.forRoot({
       isGlobal: true,
       load: [databaseConfig, appConfig],
