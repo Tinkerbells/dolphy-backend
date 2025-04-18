@@ -1,4 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateCardDto } from './dto/create-card.dto';
 import { UpdateCardDto } from './dto/update-card.dto';
 import { CardRepository } from './infrastructure/persistence/card.repository';
@@ -238,6 +243,75 @@ export class CardsService {
     card.suspended = new Date();
 
     return this.cardRepository.update(id, card);
+  }
+
+  async undoGrade(id: Card['id'], userId: string): Promise<{ card: Card }> {
+    const card = await this.cardRepository.findById(id);
+    if (!card) {
+      throw new NotFoundException('Карточка не найдена');
+    }
+    // Проверяем, что пользователь является владельцем карточки
+    if (card.userId != userId) {
+      throw new ForbiddenException(
+        'У вас нет прав для отмены оценки этой карточки',
+      );
+    }
+
+    // Найти последний лог оценки для этой карточки
+    const latestReviewLog = await this.fsrsService.findLatestReviewLog(id);
+    if (!latestReviewLog) {
+      throw new NotFoundException('Логи оценок для этой карточки не найдены');
+    }
+
+    // Найдем все логи оценок для карточки в порядке от новых к старым
+    const allLogs = await this.fsrsService.findReviewLogsByCardId(id);
+    if (allLogs.length <= 1) {
+      // Если это была первая оценка карточки, возвращаем её к начальному состоянию
+      const initializedCard = this.fsrsService.initializeCard(
+        { ...card },
+        new Date(),
+      );
+      const savedCard = await this.cardRepository.update(id, initializedCard);
+      if (!savedCard) {
+        throw new InternalServerErrorException('Не удалось обновить карточку');
+      }
+
+      // Пометить лог оценки как удаленный
+      await this.fsrsService.deleteReviewLog(latestReviewLog.id);
+
+      return {
+        card: savedCard,
+      };
+    }
+
+    // Сортируем логи по времени оценки (от новых к старым)
+    allLogs.sort((a, b) => b.review.getTime() - a.review.getTime());
+
+    // Берем второй лог (первый - это текущий, который мы отменяем)
+    const previousLog = allLogs[1];
+
+    // Восстанавливаем состояние карточки из предыдущего лога
+    const updatedCard = { ...card };
+    updatedCard.state = previousLog.state as StateType;
+    updatedCard.due = previousLog.due;
+    updatedCard.stability = previousLog.stability;
+    updatedCard.difficulty = previousLog.difficulty;
+    updatedCard.elapsed_days = previousLog.elapsed_days;
+    updatedCard.scheduled_days = previousLog.scheduled_days;
+    updatedCard.reps = card.reps > 0 ? card.reps - 1 : 0;
+    updatedCard.last_review = previousLog.review;
+
+    const savedCard = await this.cardRepository.update(id, updatedCard);
+    if (!savedCard) {
+      throw new InternalServerErrorException('Не удалось обновить карточку');
+    }
+
+    // Пометить лог оценки как удаленный
+    await this.fsrsService.deleteReviewLog(latestReviewLog.id);
+
+    return {
+      card: savedCard,
+    };
   }
 
   async softDelete(id: Card['id']): Promise<void> {

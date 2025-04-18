@@ -241,4 +241,21 @@ export class FsrsService {
 
     return result;
   }
+  async findLatestReviewLog(cardId: string): Promise<ReviewLog | null> {
+    return this.reviewLogRepository.findLatestByCardId(cardId);
+  }
+
+  /**
+   * Находит все логи оценок для указанной карточки
+   */
+  async findReviewLogsByCardId(cardId: string): Promise<ReviewLog[]> {
+    return this.reviewLogRepository.findByCardId(cardId);
+  }
+
+  /**
+   * Помечает лог оценки как удаленный
+   */
+  async deleteReviewLog(reviewLogId: string): Promise<void> {
+    await this.reviewLogRepository.update(reviewLogId, { deleted: true });
+  }
 }

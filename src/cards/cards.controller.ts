@@ -226,6 +226,23 @@ export class CardsController {
     return this.cardsService.reset(id);
   }
 
+  @Post(':id/undo')
+  @ApiOperation({ summary: 'Отменить последнюю оценку карточки' })
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+    description: 'Уникальный идентификатор карточки',
+  })
+  @ApiOkResponse({
+    type: Card,
+    description: 'Карточка с отмененной последней оценкой',
+  })
+  @HttpCode(HttpStatus.OK)
+  undoGrade(@Param('id') id: string, @Request() req) {
+    return this.cardsService.undoGrade(id, req.user.id);
+  }
+
   @Post(':id/suspend')
   @ApiOperation({ summary: 'Приостановить карточку до указанной даты' })
   @ApiParam({
