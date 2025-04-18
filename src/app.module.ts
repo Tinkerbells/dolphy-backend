@@ -40,8 +40,11 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   },
 });
 
+import { NotesModule } from './notes/notes.module';
+
 @Module({
   imports: [
+    NotesModule,
     // Конфигурация
     ConfigModule.forRoot({
       isGlobal: true,
