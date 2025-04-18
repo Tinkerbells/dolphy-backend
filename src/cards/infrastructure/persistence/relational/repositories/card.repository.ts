@@ -41,9 +41,7 @@ export class CardRelationalRepository implements CardRepository {
     }
 
     if (deckId) {
-      queryBuilder
-        .innerJoin('cards_to_decks', 'ctd', 'card.id = ctd.cardId')
-        .andWhere('ctd.deckId = :deckId', { deckId });
+      queryBuilder.andWhere('card.deckId = :deckId', { deckId });
     }
 
     const entities = await queryBuilder
@@ -74,12 +72,12 @@ export class CardRelationalRepository implements CardRepository {
   }
 
   async findByDeckId(deckId: string): Promise<Card[]> {
-    const entities = await this.cardRepository
-      .createQueryBuilder('card')
-      .innerJoin('cards_to_decks', 'ctd', 'card.id = ctd.cardId')
-      .where('ctd.deckId = :deckId', { deckId })
-      .andWhere('card.deleted = :deleted', { deleted: false })
-      .getMany();
+    const entities = await this.cardRepository.find({
+      where: {
+        deckId,
+        deleted: false,
+      },
+    });
 
     return entities.map((entity) => CardMapper.toDomain(entity));
   }
@@ -99,6 +97,40 @@ export class CardRelationalRepository implements CardRepository {
 
     return entities.map((entity) => CardMapper.toDomain(entity));
   }
+
+  async findDueCardsByDeckId(deckId: string, now: Date): Promise<Card[]> {
+    const entities = await this.cardRepository.find({
+      where: {
+        deckId,
+        due: LessThanOrEqual(now),
+        suspended: LessThanOrEqual(now),
+        deleted: false,
+      },
+      order: {
+        due: 'ASC',
+      },
+    });
+
+    return entities.map((entity) => CardMapper.toDomain(entity));
+  }
+
+  async assignToDeck(cardId: string, deckId: string): Promise<Card | null> {
+    const card = await this.findById(cardId);
+    if (!card) {
+      return null;
+    }
+
+    return this.update(cardId, { deckId });
+  }
+
+  // async removeFromDeck(cardId: string): Promise<Card | null> {
+  //   const card = await this.findById(cardId);
+  //   if (!card) {
+  //     return null;
+  //   }
+  //
+  //   return this.update(cardId);
+  // }
 
   async update(id: Card['id'], payload: Partial<Card>): Promise<Card> {
     const entity = await this.cardRepository.findOne({
@@ -122,43 +154,7 @@ export class CardRelationalRepository implements CardRepository {
   }
 
   async remove(id: Card['id']): Promise<void> {
-    // Мягкое удаление (soft delete)
+    // Мягкое удаление
     await this.update(id, { deleted: true });
-  }
-
-  async findDueCardsByDeckId(deckId: string, now: Date): Promise<Card[]> {
-    try {
-      // Подход в два этапа для надежности
-      // 1. Сначала получим все cardIds из колоды
-      const cardsToDecks = await this.cardRepository.manager.query(
-        `SELECT "cardId" FROM cards_to_decks WHERE "deckId" = $1`,
-        [deckId],
-      );
-
-      if (!cardsToDecks.length) {
-        return [];
-      }
-
-      // Извлекаем ID карточек
-      const cardIds = cardsToDecks.map((row) => row.cardId);
-
-      // 2. Теперь получаем карточки, которые подлежат повторению
-      const entities = await this.cardRepository.find({
-        where: {
-          id: In(cardIds),
-          due: LessThanOrEqual(now),
-          suspended: LessThanOrEqual(now),
-          deleted: false,
-        },
-        order: {
-          due: 'ASC',
-        },
-      });
-
-      return entities.map((entity) => CardMapper.toDomain(entity));
-    } catch (error) {
-      console.error('Ошибка в findDueCardsByDeckId:', error);
-      throw error;
-    }
   }
 }

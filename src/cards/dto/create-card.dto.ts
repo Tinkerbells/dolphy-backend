@@ -73,14 +73,13 @@ export class CreateCardDto {
   answer: string;
 
   @ApiPropertyOptional({
-    type: [String],
-    example: ['cbcfa8b8-3a25-4adb-a9c6-e325f0d0f3ae'],
-    description: 'Идентификаторы колод, к которым относится карточка',
+    type: String,
+    example: 'cbcfa8b8-3a25-4adb-a9c6-e325f0d0f3ae',
+    description: 'Идентификатор колоды, к которой относится карточка',
   })
-  @IsArray()
-  @IsUUID('4', { each: true })
-  @IsOptional()
-  deckIds?: string[];
+  @IsString()
+  @IsUUID('4')
+  deckId: string;
 
   @ApiPropertyOptional({
     type: CardMetadataDto,

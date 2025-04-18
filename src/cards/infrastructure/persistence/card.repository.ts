@@ -24,11 +24,16 @@ export abstract class CardRepository {
 
   abstract findDueCards(userId: string, now: Date): Promise<Card[]>;
 
+  abstract findDueCardsByDeckId(deckId: string, now: Date): Promise<Card[]>;
+
+  // Новые методы для работы с колодами
+  abstract assignToDeck(cardId: string, deckId: string): Promise<Card | null>;
+  // abstract removeFromDeck(cardId: string): Promise<Card | null>;
+
   abstract update(
     id: Card['id'],
     payload: DeepPartial<Card>,
   ): Promise<Card | null>;
 
   abstract remove(id: Card['id']): Promise<void>;
-  abstract findDueCardsByDeckId(deckId: string, now: Date): Promise<Card[]>;
 }

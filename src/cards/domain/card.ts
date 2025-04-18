@@ -77,6 +77,13 @@ export class Card {
   userId: string;
 
   @ApiProperty({
+    type: String,
+    example: 'cbcfa8b8-3a25-4adb-a9c6-e325f0d0f3ae',
+    description: 'ID колоды, к которой относится карточка',
+  })
+  deckId: string;
+
+  @ApiProperty({
     type: Boolean,
     example: false,
   })

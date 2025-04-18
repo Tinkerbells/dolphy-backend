@@ -16,6 +16,7 @@ export class CardMapper {
     domainEntity.last_review = raw.last_review;
     domainEntity.suspended = raw.suspended;
     domainEntity.userId = raw.userId;
+    domainEntity.deckId = raw.deckId;
     domainEntity.deleted = raw.deleted;
     domainEntity.createdAt = raw.createdAt;
 
@@ -38,6 +39,7 @@ export class CardMapper {
     persistenceEntity.last_review = domainEntity.last_review;
     persistenceEntity.suspended = domainEntity.suspended;
     persistenceEntity.userId = domainEntity.userId;
+    persistenceEntity.deckId = domainEntity.deckId;
     persistenceEntity.deleted = domainEntity.deleted;
     persistenceEntity.createdAt = domainEntity.createdAt;
 

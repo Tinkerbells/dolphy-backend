@@ -27,6 +27,11 @@ export class CardsService {
     newCard.id = uuidv4();
     newCard.userId = userId;
 
+    // Если указана колода, присваиваем карточку к ней
+    if (createCardDto.deckId) {
+      newCard.deckId = createCardDto.deckId;
+    }
+
     // Инициализируем карточку с помощью FSRS
     const now = new Date();
     const initializedCard = this.fsrsService.initializeCard(newCard, now);
@@ -113,10 +118,27 @@ export class CardsService {
     return this.cardRepository.findByIds(ids);
   }
 
+  findByDeckId(deckId: string): Promise<Card[]> {
+    return this.cardRepository.findByDeckId(deckId);
+  }
+
   async findDueCards(userId: string): Promise<Card[]> {
     const now = new Date();
     return this.cardRepository.findDueCards(userId, now);
   }
+
+  async findDueCardsByDeckId(deckId: string): Promise<Card[]> {
+    const now = new Date();
+    return this.cardRepository.findDueCardsByDeckId(deckId, now);
+  }
+
+  async assignToDeck(cardId: string, deckId: string): Promise<Card | null> {
+    return this.cardRepository.assignToDeck(cardId, deckId);
+  }
+
+  // async removeFromDeck(cardId: string): Promise<Card | null> {
+  //   return this.cardRepository.removeFromDeck(cardId);
+  // }
 
   async update(
     id: Card['id'],
@@ -146,6 +168,12 @@ export class CardsService {
       cardContent.source = updateCardDto.metadata.source;
       cardContent.sourceId = updateCardDto.metadata.sourceId;
       cardContent.extend = updateCardDto.metadata;
+    }
+
+    // Если указана колода, обновляем привязку
+    if (updateCardDto.deckId !== undefined) {
+      card.deckId = updateCardDto.deckId;
+      await this.cardRepository.update(id, { deckId: updateCardDto.deckId });
     }
 
     const updatedContent = await this.cardContentRepository.update(
@@ -242,10 +270,5 @@ export class CardsService {
 
   remove(id: Card['id']): Promise<void> {
     return this.cardRepository.remove(id);
-  }
-
-  async findDueCardsByDeckId(deckId: string): Promise<Card[]> {
-    const now = new Date();
-    return this.cardRepository.findDueCardsByDeckId(deckId, now);
   }
 }

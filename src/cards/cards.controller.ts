@@ -292,7 +292,8 @@ export class CardsController {
   restore(@Param('id') id: string) {
     return this.cardsService.restore(id);
   }
-  @Get('due/deck/:deckId')
+
+  @Get('deck/:deckId')
   @ApiOperation({
     summary: 'Получить карточки для повторения из конкретной колоды',
   })
@@ -304,6 +305,24 @@ export class CardsController {
   @ApiOkResponse({
     type: [Card],
     description: 'Карточки, которые нужно повторить из указанной колоды',
+  })
+  @HttpCode(HttpStatus.OK)
+  async findByDeckId(@Param('deckId') deckId: string) {
+    return this.cardsService.findByDeckId(deckId);
+  }
+
+  @Get('due/deck/:deckId')
+  @ApiOperation({
+    summary: 'Получить карточки из конкретной колоды',
+  })
+  @ApiParam({
+    name: 'deckId',
+    description: 'ID колоды',
+    type: String,
+  })
+  @ApiOkResponse({
+    type: [Card],
+    description: 'Карточки из указанной колоды',
   })
   @HttpCode(HttpStatus.OK)
   async findDueByDeckId(@Param('deckId') deckId: string) {
