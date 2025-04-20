@@ -1,9 +1,9 @@
-import { Market } from '../../../../domain/market';
-import { MarketEntity } from '../entities/market.entity';
+import { MarketDeck } from '../../../../domain/market-deck';
+import { MarketDeckEntity } from '../entities/market-deck.entity';
 
-export class MarketMapper {
-  static toDomain(raw: MarketEntity): Market {
-    const domainEntity = new Market();
+export class MarketDeckMapper {
+  static toDomain(raw: MarketDeckEntity): MarketDeck {
+    const domainEntity = new MarketDeck();
     domainEntity.id = raw.id;
     domainEntity.createdAt = raw.createdAt;
     domainEntity.updatedAt = raw.updatedAt;
@@ -11,8 +11,8 @@ export class MarketMapper {
     return domainEntity;
   }
 
-  static toPersistence(domainEntity: Market): MarketEntity {
-    const persistenceEntity = new MarketEntity();
+  static toPersistence(domainEntity: MarketDeck): MarketDeckEntity {
+    const persistenceEntity = new MarketDeckEntity();
     if (domainEntity.id) {
       persistenceEntity.id = domainEntity.id;
     }

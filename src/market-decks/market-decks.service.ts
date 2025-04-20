@@ -2,27 +2,27 @@ import {
   // common
   Injectable,
 } from '@nestjs/common';
-import { CreateMarketDto } from './dto/create-market.dto';
-import { UpdateMarketDto } from './dto/update-market.dto';
-import { MarketRepository } from './infrastructure/persistence/market.repository';
+import { CreateMarketDeckDto } from './dto/create-market-deck.dto';
+import { UpdateMarketDeckDto } from './dto/update-market-deck.dto';
+import { MarketDeckRepository } from './infrastructure/persistence/market-deck.repository';
 import { IPaginationOptions } from '../utils/types/pagination-options';
-import { Market } from './domain/market';
+import { MarketDeck } from './domain/market-deck';
 
 @Injectable()
-export class MarketsService {
+export class MarketDecksService {
   constructor(
     // Dependencies here
-    private readonly marketRepository: MarketRepository,
+    private readonly marketDeckRepository: MarketDeckRepository,
   ) {}
 
   async create(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    createMarketDto: CreateMarketDto,
+    createMarketDeckDto: CreateMarketDeckDto,
   ) {
     // Do not remove comment below.
     // <creating-property />
 
-    return this.marketRepository.create({
+    return this.marketDeckRepository.create({
       // Do not remove comment below.
       // <creating-property-payload />
     });
@@ -33,7 +33,7 @@ export class MarketsService {
   }: {
     paginationOptions: IPaginationOptions;
   }) {
-    return this.marketRepository.findAllWithPagination({
+    return this.marketDeckRepository.findAllWithPagination({
       paginationOptions: {
         page: paginationOptions.page,
         limit: paginationOptions.limit,
@@ -41,29 +41,29 @@ export class MarketsService {
     });
   }
 
-  findById(id: Market['id']) {
-    return this.marketRepository.findById(id);
+  findById(id: MarketDeck['id']) {
+    return this.marketDeckRepository.findById(id);
   }
 
-  findByIds(ids: Market['id'][]) {
-    return this.marketRepository.findByIds(ids);
+  findByIds(ids: MarketDeck['id'][]) {
+    return this.marketDeckRepository.findByIds(ids);
   }
 
   async update(
-    id: Market['id'],
+    id: MarketDeck['id'],
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    updateMarketDto: UpdateMarketDto,
+    updateMarketDeckDto: UpdateMarketDeckDto,
   ) {
     // Do not remove comment below.
     // <updating-property />
 
-    return this.marketRepository.update(id, {
+    return this.marketDeckRepository.update(id, {
       // Do not remove comment below.
       // <updating-property-payload />
     });
   }
 
-  remove(id: Market['id']) {
-    return this.marketRepository.remove(id);
+  remove(id: MarketDeck['id']) {
+    return this.marketDeckRepository.remove(id);
   }
 }

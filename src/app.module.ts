@@ -44,11 +44,14 @@ import { NotesModule } from './notes/notes.module';
 
 import { StatisticsModule } from './statistics/statistics.module';
 
-import { MarketsModule } from './markets/markets.module';
+import { MarketDecksModule } from './market-decks/market-decks.module';
+
+import { MarketCommentsModule } from './market-comments/market-comments.module';
 
 @Module({
   imports: [
-    MarketsModule,
+    MarketCommentsModule,
+    MarketDecksModule,
     NotesModule,
     // Конфигурация
     ConfigModule.forRoot({

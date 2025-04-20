@@ -1,3 +1,3 @@
-export class CreateMarketDto {
+export class CreateMarketCommentDto {
   // Don't forget to use the class-validator decorators in the DTO properties.
 }

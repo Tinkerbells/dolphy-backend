@@ -9,9 +9,9 @@ import {
   UseGuards,
   Query,
 } from '@nestjs/common';
-import { MarketsService } from './markets.service';
-import { CreateMarketDto } from './dto/create-market.dto';
-import { UpdateMarketDto } from './dto/update-market.dto';
+import { MarketDecksService } from './market-decks.service';
+import { CreateMarketDeckDto } from './dto/create-market-deck.dto';
+import { UpdateMarketDeckDto } from './dto/update-market-deck.dto';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
@@ -19,40 +19,40 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import { Market } from './domain/market';
+import { MarketDeck } from './domain/market-deck';
 import { AuthGuard } from '@nestjs/passport';
 import {
   InfinityPaginationResponse,
   InfinityPaginationResponseDto,
 } from '../utils/dto/infinity-pagination-response.dto';
 import { infinityPagination } from '../utils/infinity-pagination';
-import { FindAllMarketsDto } from './dto/find-all-markets.dto';
+import { FindAllMarketDecksDto } from './dto/find-all-market-decks.dto';
 
-@ApiTags('Markets')
+@ApiTags('Marketdecks')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 @Controller({
-  path: 'markets',
+  path: 'market-decks',
   version: '1',
 })
-export class MarketsController {
-  constructor(private readonly marketsService: MarketsService) {}
+export class MarketDecksController {
+  constructor(private readonly marketDecksService: MarketDecksService) {}
 
   @Post()
   @ApiCreatedResponse({
-    type: Market,
+    type: MarketDeck,
   })
-  create(@Body() createMarketDto: CreateMarketDto) {
-    return this.marketsService.create(createMarketDto);
+  create(@Body() createMarketDeckDto: CreateMarketDeckDto) {
+    return this.marketDecksService.create(createMarketDeckDto);
   }
 
   @Get()
   @ApiOkResponse({
-    type: InfinityPaginationResponse(Market),
+    type: InfinityPaginationResponse(MarketDeck),
   })
   async findAll(
-    @Query() query: FindAllMarketsDto,
-  ): Promise<InfinityPaginationResponseDto<Market>> {
+    @Query() query: FindAllMarketDecksDto,
+  ): Promise<InfinityPaginationResponseDto<MarketDeck>> {
     const page = query?.page ?? 1;
     let limit = query?.limit ?? 10;
     if (limit > 50) {
@@ -60,7 +60,7 @@ export class MarketsController {
     }
 
     return infinityPagination(
-      await this.marketsService.findAllWithPagination({
+      await this.marketDecksService.findAllWithPagination({
         paginationOptions: {
           page,
           limit,
@@ -77,10 +77,10 @@ export class MarketsController {
     required: true,
   })
   @ApiOkResponse({
-    type: Market,
+    type: MarketDeck,
   })
   findById(@Param('id') id: string) {
-    return this.marketsService.findById(id);
+    return this.marketDecksService.findById(id);
   }
 
   @Patch(':id')
@@ -90,10 +90,13 @@ export class MarketsController {
     required: true,
   })
   @ApiOkResponse({
-    type: Market,
+    type: MarketDeck,
   })
-  update(@Param('id') id: string, @Body() updateMarketDto: UpdateMarketDto) {
-    return this.marketsService.update(id, updateMarketDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateMarketDeckDto: UpdateMarketDeckDto,
+  ) {
+    return this.marketDecksService.update(id, updateMarketDeckDto);
   }
 
   @Delete(':id')
@@ -103,6 +106,6 @@ export class MarketsController {
     required: true,
   })
   remove(@Param('id') id: string) {
-    return this.marketsService.remove(id);
+    return this.marketDecksService.remove(id);
   }
 }
