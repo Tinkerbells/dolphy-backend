@@ -30,7 +30,7 @@ export class FindAllMarketDecksDto {
 
   @ApiPropertyOptional({
     description: 'Фильтрация по идентификатору автора',
-    example: 'cbcfa8b8-3a25-4adb-a9c6-e325f0d0f3ae',
+    example: '',
   })
   @IsString()
   @IsUUID('4')
