@@ -1,7 +1,7 @@
 import { DeepPartial } from '../../../utils/types/deep-partial.type';
 import { NullableType } from '../../../utils/types/nullable.type';
 import { IPaginationOptions } from '../../../utils/types/pagination-options';
-import { MarketComment } from '../../domain/market-comment';
+import { MarketComment } from '../../../market-comments/domain/market-comment';
 
 export abstract class MarketCommentRepository {
   abstract create(
@@ -10,8 +10,12 @@ export abstract class MarketCommentRepository {
 
   abstract findAllWithPagination({
     paginationOptions,
+    marketDeckId,
+    userId,
   }: {
     paginationOptions: IPaginationOptions;
+    marketDeckId?: string;
+    userId?: string;
   }): Promise<MarketComment[]>;
 
   abstract findById(
@@ -19,6 +23,19 @@ export abstract class MarketCommentRepository {
   ): Promise<NullableType<MarketComment>>;
 
   abstract findByIds(ids: MarketComment['id'][]): Promise<MarketComment[]>;
+
+  abstract findByMarketDeckId(marketDeckId: string): Promise<MarketComment[]>;
+
+  abstract findByUserIdAndMarketDeckId(
+    userId: string,
+    marketDeckId: string,
+  ): Promise<NullableType<MarketComment>>;
+
+  abstract countByMarketDeckId(marketDeckId: string): Promise<number>;
+
+  abstract getAverageRatingByMarketDeckId(
+    marketDeckId: string,
+  ): Promise<number>;
 
   abstract update(
     id: MarketComment['id'],

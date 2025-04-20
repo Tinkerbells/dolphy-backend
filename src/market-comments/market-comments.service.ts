@@ -1,69 +1,132 @@
 import {
-  // common
+  BadRequestException,
+  ForbiddenException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
 import { CreateMarketCommentDto } from './dto/create-market-comment.dto';
-import { UpdateMarketCommentDto } from './dto/update-market-comment.dto';
 import { MarketCommentRepository } from './infrastructure/persistence/market-comment.repository';
-import { IPaginationOptions } from '../utils/types/pagination-options';
-import { MarketComment } from './domain/market-comment';
+import { MarketComment } from '../market-comments/domain/market-comment';
+import { FindAllMarketCommentsDto } from './dto/find-all-market-comments.dto';
+import { MarketDeckRepository } from 'src/market-decks/infrastructure/persistence/market-deck.repository';
 
 @Injectable()
 export class MarketCommentsService {
   constructor(
-    // Dependencies here
     private readonly marketCommentRepository: MarketCommentRepository,
+    private readonly marketDeckRepository: MarketDeckRepository,
   ) {}
 
   async create(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     createMarketCommentDto: CreateMarketCommentDto,
-  ) {
-    // Do not remove comment below.
-    // <creating-property />
+    userId: string,
+  ): Promise<MarketComment> {
+    // Проверяем, существует ли колода
+    const marketDeck = await this.marketDeckRepository.findById(
+      createMarketCommentDto.marketDeckId,
+    );
+    if (!marketDeck) {
+      throw new NotFoundException('Колода не найдена');
+    }
 
-    return this.marketCommentRepository.create({
-      // Do not remove comment below.
-      // <creating-property-payload />
-    });
+    // Проверяем, оставлял ли пользователь уже комментарий к этой колоде
+    const existingComment =
+      await this.marketCommentRepository.findByUserIdAndMarketDeckId(
+        userId,
+        createMarketCommentDto.marketDeckId,
+      );
+    if (existingComment) {
+      throw new BadRequestException(
+        'Вы уже оставили комментарий к этой колоде',
+      );
+    }
+
+    // Создаем комментарий
+    const newComment = new MarketComment();
+    newComment.id = uuidv4();
+    newComment.marketDeckId = createMarketCommentDto.marketDeckId;
+    newComment.userId = userId;
+    newComment.text = createMarketCommentDto.text;
+    newComment.rating = createMarketCommentDto.rating;
+    newComment.deleted = false;
+
+    // Сохраняем комментарий
+    const savedComment = await this.marketCommentRepository.create(newComment);
+
+    // Обновляем рейтинг колоды
+    await this.updateDeckRating(createMarketCommentDto.marketDeckId);
+
+    return savedComment;
   }
 
-  findAllWithPagination({
-    paginationOptions,
-  }: {
-    paginationOptions: IPaginationOptions;
-  }) {
+  findAllWithPagination(
+    findAllMarketCommentsDto: FindAllMarketCommentsDto,
+  ): Promise<MarketComment[]> {
+    const page = findAllMarketCommentsDto?.page ?? 1;
+    const limit = findAllMarketCommentsDto?.limit ?? 10;
+
     return this.marketCommentRepository.findAllWithPagination({
       paginationOptions: {
-        page: paginationOptions.page,
-        limit: paginationOptions.limit,
+        page,
+        limit,
       },
+      marketDeckId: findAllMarketCommentsDto.marketDeckId,
+      userId: findAllMarketCommentsDto.userId,
     });
   }
 
-  findById(id: MarketComment['id']) {
-    return this.marketCommentRepository.findById(id);
+  async findByMarketDeckId(marketDeckId: string): Promise<MarketComment[]> {
+    // Проверяем, существует ли колода
+    const marketDeck = await this.marketDeckRepository.findById(marketDeckId);
+    if (!marketDeck) {
+      throw new NotFoundException('Колода не найдена');
+    }
+
+    return this.marketCommentRepository.findByMarketDeckId(marketDeckId);
   }
 
-  findByIds(ids: MarketComment['id'][]) {
-    return this.marketCommentRepository.findByIds(ids);
+  async findById(id: MarketComment['id']): Promise<MarketComment> {
+    const comment = await this.marketCommentRepository.findById(id);
+    if (!comment) {
+      throw new NotFoundException('Комментарий не найден');
+    }
+    return comment;
   }
 
-  async update(
-    id: MarketComment['id'],
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    updateMarketCommentDto: UpdateMarketCommentDto,
-  ) {
-    // Do not remove comment below.
-    // <updating-property />
+  async remove(id: MarketComment['id'], userId: string): Promise<void> {
+    const comment = await this.marketCommentRepository.findById(id);
+    if (!comment) {
+      throw new NotFoundException('Комментарий не найден');
+    }
 
-    return this.marketCommentRepository.update(id, {
-      // Do not remove comment below.
-      // <updating-property-payload />
-    });
+    // Проверяем, имеет ли пользователь право удалять этот комментарий
+    if (comment.userId !== userId) {
+      throw new ForbiddenException('Вы не можете удалять чужой комментарий');
+    }
+
+    await this.marketCommentRepository.remove(id);
+
+    // Обновляем рейтинг колоды
+    await this.updateDeckRating(comment.marketDeckId);
   }
 
-  remove(id: MarketComment['id']) {
-    return this.marketCommentRepository.remove(id);
+  private async updateDeckRating(marketDeckId: string): Promise<void> {
+    // Получаем средний рейтинг всех комментариев к колоде
+    const averageRating =
+      await this.marketCommentRepository.getAverageRatingByMarketDeckId(
+        marketDeckId,
+      );
+
+    // Получаем количество комментариев к колоде
+    const commentCount =
+      await this.marketCommentRepository.countByMarketDeckId(marketDeckId);
+
+    // Обновляем рейтинг и количество комментариев колоды
+    await this.marketDeckRepository.updateRating(
+      marketDeckId,
+      averageRating,
+      commentCount,
+    );
   }
 }

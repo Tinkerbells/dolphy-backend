@@ -3,23 +3,25 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
   UseGuards,
   Query,
+  Request,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { MarketCommentsService } from './market-comments.service';
 import { CreateMarketCommentDto } from './dto/create-market-comment.dto';
-import { UpdateMarketCommentDto } from './dto/update-market-comment.dto';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
   ApiOkResponse,
   ApiParam,
   ApiTags,
+  ApiOperation,
 } from '@nestjs/swagger';
-import { MarketComment } from './domain/market-comment';
+import { MarketComment } from '../market-comments/domain/market-comment';
 import { AuthGuard } from '@nestjs/passport';
 import {
   InfinityPaginationResponse,
@@ -28,28 +30,40 @@ import {
 import { infinityPagination } from '../utils/infinity-pagination';
 import { FindAllMarketCommentsDto } from './dto/find-all-market-comments.dto';
 
-@ApiTags('Marketcomments')
+@ApiTags('Market Comments')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 @Controller({
-  path: 'market-comments',
+  path: 'market/comments',
   version: '1',
 })
 export class MarketCommentsController {
   constructor(private readonly marketCommentsService: MarketCommentsService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Добавить комментарий к колоде' })
   @ApiCreatedResponse({
     type: MarketComment,
+    description: 'Комментарий успешно добавлен',
   })
-  create(@Body() createMarketCommentDto: CreateMarketCommentDto) {
-    return this.marketCommentsService.create(createMarketCommentDto);
+  @HttpCode(HttpStatus.CREATED)
+  create(
+    @Body() createMarketCommentDto: CreateMarketCommentDto,
+    @Request() req,
+  ) {
+    return this.marketCommentsService.create(
+      createMarketCommentDto,
+      req.user.id,
+    );
   }
 
   @Get()
+  @ApiOperation({ summary: 'Получить список комментариев' })
   @ApiOkResponse({
     type: InfinityPaginationResponse(MarketComment),
+    description: 'Список комментариев с пагинацией',
   })
+  @HttpCode(HttpStatus.OK)
   async findAll(
     @Query() query: FindAllMarketCommentsDto,
   ): Promise<InfinityPaginationResponseDto<MarketComment>> {
@@ -59,53 +73,56 @@ export class MarketCommentsController {
       limit = 50;
     }
 
-    return infinityPagination(
-      await this.marketCommentsService.findAllWithPagination({
-        paginationOptions: {
-          page,
-          limit,
-        },
-      }),
-      { page, limit },
-    );
+    const marketComments =
+      await this.marketCommentsService.findAllWithPagination(query);
+
+    return infinityPagination(marketComments, { page, limit });
+  }
+
+  @Get('deck/:marketDeckId')
+  @ApiOperation({ summary: 'Получить комментарии к конкретной колоде' })
+  @ApiParam({
+    name: 'marketDeckId',
+    type: String,
+    required: true,
+    description: 'ID колоды в маркетплейсе',
+  })
+  @ApiOkResponse({
+    type: [MarketComment],
+    description: 'Список комментариев к колоде',
+  })
+  @HttpCode(HttpStatus.OK)
+  findByMarketDeckId(@Param('marketDeckId') marketDeckId: string) {
+    return this.marketCommentsService.findByMarketDeckId(marketDeckId);
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Получить конкретный комментарий' })
   @ApiParam({
     name: 'id',
     type: String,
     required: true,
+    description: 'ID комментария',
   })
   @ApiOkResponse({
     type: MarketComment,
+    description: 'Детальная информация о комментарии',
   })
-  findById(@Param('id') id: string) {
+  @HttpCode(HttpStatus.OK)
+  findOne(@Param('id') id: string) {
     return this.marketCommentsService.findById(id);
   }
 
-  @Patch(':id')
-  @ApiParam({
-    name: 'id',
-    type: String,
-    required: true,
-  })
-  @ApiOkResponse({
-    type: MarketComment,
-  })
-  update(
-    @Param('id') id: string,
-    @Body() updateMarketCommentDto: UpdateMarketCommentDto,
-  ) {
-    return this.marketCommentsService.update(id, updateMarketCommentDto);
-  }
-
   @Delete(':id')
+  @ApiOperation({ summary: 'Удалить комментарий' })
   @ApiParam({
     name: 'id',
     type: String,
     required: true,
+    description: 'ID комментария',
   })
-  remove(@Param('id') id: string) {
-    return this.marketCommentsService.remove(id);
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(@Param('id') id: string, @Request() req) {
+    return this.marketCommentsService.remove(id, req.user.id);
   }
 }

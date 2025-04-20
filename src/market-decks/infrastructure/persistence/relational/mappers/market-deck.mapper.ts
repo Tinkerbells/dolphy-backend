@@ -5,6 +5,13 @@ export class MarketDeckMapper {
   static toDomain(raw: MarketDeckEntity): MarketDeck {
     const domainEntity = new MarketDeck();
     domainEntity.id = raw.id;
+    domainEntity.deckId = raw.deckId;
+    domainEntity.authorId = raw.authorId;
+    domainEntity.downloadCount = raw.downloadCount;
+    domainEntity.rating = raw.rating;
+    domainEntity.commentsCount = raw.commentsCount;
+    domainEntity.cardsCount = raw.cardsCount;
+    domainEntity.deleted = raw.deleted;
     domainEntity.createdAt = raw.createdAt;
     domainEntity.updatedAt = raw.updatedAt;
 
@@ -16,6 +23,13 @@ export class MarketDeckMapper {
     if (domainEntity.id) {
       persistenceEntity.id = domainEntity.id;
     }
+    persistenceEntity.deckId = domainEntity.deckId;
+    persistenceEntity.authorId = domainEntity.authorId;
+    persistenceEntity.downloadCount = domainEntity.downloadCount;
+    persistenceEntity.rating = domainEntity.rating;
+    persistenceEntity.commentsCount = domainEntity.commentsCount;
+    persistenceEntity.cardsCount = domainEntity.cardsCount;
+    persistenceEntity.deleted = domainEntity.deleted;
     persistenceEntity.createdAt = domainEntity.createdAt;
     persistenceEntity.updatedAt = domainEntity.updatedAt;
 

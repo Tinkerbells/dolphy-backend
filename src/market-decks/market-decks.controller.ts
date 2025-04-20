@@ -8,6 +8,9 @@ import {
   Delete,
   UseGuards,
   Query,
+  Request,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { MarketDecksService } from './market-decks.service';
 import { CreateMarketDeckDto } from './dto/create-market-deck.dto';
@@ -18,6 +21,7 @@ import {
   ApiOkResponse,
   ApiParam,
   ApiTags,
+  ApiOperation,
 } from '@nestjs/swagger';
 import { MarketDeck } from './domain/market-deck';
 import { AuthGuard } from '@nestjs/passport';
@@ -28,28 +32,34 @@ import {
 import { infinityPagination } from '../utils/infinity-pagination';
 import { FindAllMarketDecksDto } from './dto/find-all-market-decks.dto';
 
-@ApiTags('Marketdecks')
+@ApiTags('Market Decks')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 @Controller({
-  path: 'market-decks',
+  path: 'market/decks',
   version: '1',
 })
 export class MarketDecksController {
   constructor(private readonly marketDecksService: MarketDecksService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Опубликовать колоду в маркетплейсе' })
   @ApiCreatedResponse({
     type: MarketDeck,
+    description: 'Колода успешно опубликована',
   })
-  create(@Body() createMarketDeckDto: CreateMarketDeckDto) {
-    return this.marketDecksService.create(createMarketDeckDto);
+  @HttpCode(HttpStatus.CREATED)
+  create(@Body() createMarketDeckDto: CreateMarketDeckDto, @Request() req) {
+    return this.marketDecksService.create(createMarketDeckDto, req.user.id);
   }
 
   @Get()
+  @ApiOperation({ summary: 'Получить список опубликованных колод' })
   @ApiOkResponse({
     type: InfinityPaginationResponse(MarketDeck),
+    description: 'Список колод с пагинацией',
   })
+  @HttpCode(HttpStatus.OK)
   async findAll(
     @Query() query: FindAllMarketDecksDto,
   ): Promise<InfinityPaginationResponseDto<MarketDeck>> {
@@ -59,53 +69,109 @@ export class MarketDecksController {
       limit = 50;
     }
 
-    return infinityPagination(
-      await this.marketDecksService.findAllWithPagination({
-        paginationOptions: {
-          page,
-          limit,
-        },
-      }),
-      { page, limit },
-    );
+    const marketDecks =
+      await this.marketDecksService.findAllWithPagination(query);
+
+    return infinityPagination(marketDecks, { page, limit });
+  }
+
+  @Get('popular')
+  @ApiOperation({ summary: 'Получить популярные колоды' })
+  @ApiOkResponse({
+    type: InfinityPaginationResponse(MarketDeck),
+    description: 'Список популярных колод',
+  })
+  @HttpCode(HttpStatus.OK)
+  async findPopular(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Query('sortBy') sortBy: 'downloadCount' | 'rating' = 'downloadCount',
+  ): Promise<InfinityPaginationResponseDto<MarketDeck>> {
+    if (limit > 50) {
+      limit = 50;
+    }
+
+    const marketDecks = await this.marketDecksService.findPopular({
+      paginationOptions: { page, limit },
+      sortBy,
+    });
+
+    return infinityPagination(marketDecks, { page, limit });
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Получить информацию о конкретной колоде' })
   @ApiParam({
     name: 'id',
     type: String,
     required: true,
+    description: 'ID колоды в маркетплейсе',
   })
   @ApiOkResponse({
     type: MarketDeck,
+    description: 'Детальная информация о колоде',
   })
-  findById(@Param('id') id: string) {
+  @HttpCode(HttpStatus.OK)
+  findOne(@Param('id') id: string) {
     return this.marketDecksService.findById(id);
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Обновить информацию о колоде' })
   @ApiParam({
     name: 'id',
     type: String,
     required: true,
+    description: 'ID колоды в маркетплейсе',
   })
   @ApiOkResponse({
     type: MarketDeck,
+    description: 'Обновленная информация о колоде',
   })
+  @HttpCode(HttpStatus.OK)
   update(
     @Param('id') id: string,
     @Body() updateMarketDeckDto: UpdateMarketDeckDto,
+    @Request() req,
   ) {
-    return this.marketDecksService.update(id, updateMarketDeckDto);
+    return this.marketDecksService.update(id, updateMarketDeckDto, req.user.id);
   }
 
-  @Delete(':id')
+  @Post(':id/copy')
+  @ApiOperation({ summary: 'Скопировать колоду к себе' })
   @ApiParam({
     name: 'id',
     type: String,
     required: true,
+    description: 'ID колоды в маркетплейсе',
   })
-  remove(@Param('id') id: string) {
-    return this.marketDecksService.remove(id);
+  @ApiOkResponse({
+    description: 'ID новой колоды',
+    schema: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'string',
+          example: 'cbcfa8b8-3a25-4adb-a9c6-e325f0d0f3ae',
+        },
+      },
+    },
+  })
+  @HttpCode(HttpStatus.OK)
+  copyDeck(@Param('id') id: string, @Request() req) {
+    return this.marketDecksService.copyDeck(id, req.user.id);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Удалить колоду из маркетплейса' })
+  @ApiParam({
+    name: 'id',
+    type: String,
+    required: true,
+    description: 'ID колоды в маркетплейсе',
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(@Param('id') id: string, @Request() req) {
+    return this.marketDecksService.remove(id, req.user.id);
   }
 }
