@@ -1,12 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsArray,
   IsBoolean,
   IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
-  MaxLength,
 } from 'class-validator';
 
 export class CreateMarketDeckDto {
@@ -18,38 +16,6 @@ export class CreateMarketDeckDto {
   @IsUUID('4')
   @IsNotEmpty()
   deckId: string;
-
-  @ApiProperty({
-    example: 'Японский язык: базовые иероглифы',
-    description: 'Название колоды',
-  })
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(100, {
-    message: 'Название должно быть не более 100 символов',
-  })
-  title: string;
-
-  @ApiProperty({
-    example: 'Колода содержит 100 базовых иероглифов для начинающих',
-    description: 'Описание колоды',
-  })
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(1000, {
-    message: 'Описание должно быть не более 1000 символов',
-  })
-  description: string;
-
-  @ApiPropertyOptional({
-    type: [String],
-    example: ['japanese', 'language', 'beginner'],
-    description: 'Теги колоды для поиска',
-  })
-  @IsArray()
-  @IsString({ each: true })
-  @IsOptional()
-  tags?: string[];
 
   @ApiPropertyOptional({
     type: Boolean,

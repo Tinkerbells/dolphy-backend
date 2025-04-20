@@ -26,6 +26,27 @@ export class MarketDeck {
   authorId: string;
 
   @ApiProperty({
+    type: String,
+    example: 'Японский язык: базовые иероглифы',
+    description: 'Название колоды',
+  })
+  title: string;
+
+  @ApiProperty({
+    type: String,
+    example: 'Колода содержит 100 базовых иероглифов для начинающих',
+    description: 'Описание колоды',
+  })
+  description: string;
+
+  @ApiProperty({
+    type: [String],
+    example: ['japanese', 'language', 'beginner'],
+    description: 'Теги колоды для поиска',
+  })
+  tags: string[];
+
+  @ApiProperty({
     type: Number,
     example: 0,
     description: 'Количество скачиваний колоды',

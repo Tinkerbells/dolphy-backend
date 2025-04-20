@@ -7,6 +7,9 @@ export class MarketDeckMapper {
     domainEntity.id = raw.id;
     domainEntity.deckId = raw.deckId;
     domainEntity.authorId = raw.authorId;
+    domainEntity.title = raw.title;
+    domainEntity.description = raw.description;
+    domainEntity.tags = raw.tags || [];
     domainEntity.downloadCount = raw.downloadCount;
     domainEntity.rating = raw.rating;
     domainEntity.commentsCount = raw.commentsCount;
@@ -25,6 +28,9 @@ export class MarketDeckMapper {
     }
     persistenceEntity.deckId = domainEntity.deckId;
     persistenceEntity.authorId = domainEntity.authorId;
+    persistenceEntity.title = domainEntity.title;
+    persistenceEntity.description = domainEntity.description;
+    persistenceEntity.tags = domainEntity.tags;
     persistenceEntity.downloadCount = domainEntity.downloadCount;
     persistenceEntity.rating = domainEntity.rating;
     persistenceEntity.commentsCount = domainEntity.commentsCount;

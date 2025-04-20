@@ -55,6 +55,8 @@ export class MarketDecksService {
     const newMarketDeck = new MarketDeck();
     newMarketDeck.id = uuidv4();
     newMarketDeck.deckId = createMarketDeckDto.deckId;
+    newMarketDeck.title = originalDeck.name;
+    newMarketDeck.description = originalDeck.description;
     newMarketDeck.authorId = userId;
     newMarketDeck.downloadCount = 0;
     newMarketDeck.rating = 0;
