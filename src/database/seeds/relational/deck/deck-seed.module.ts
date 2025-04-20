@@ -10,4 +10,3 @@ import { DeckEntity } from '../../../../decks/infrastructure/persistence/relatio
   exports: [DeckSeedService],
 })
 export class DeckSeedModule {}
-

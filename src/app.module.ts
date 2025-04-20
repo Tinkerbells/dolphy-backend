@@ -44,8 +44,11 @@ import { NotesModule } from './notes/notes.module';
 
 import { StatisticsModule } from './statistics/statistics.module';
 
+import { MarketsModule } from './markets/markets.module';
+
 @Module({
   imports: [
+    MarketsModule,
     NotesModule,
     // Конфигурация
     ConfigModule.forRoot({
