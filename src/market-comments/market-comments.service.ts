@@ -112,21 +112,27 @@ export class MarketCommentsService {
   }
 
   private async updateDeckRating(marketDeckId: string): Promise<void> {
-    // Получаем средний рейтинг всех комментариев к колоде
-    const averageRating =
-      await this.marketCommentRepository.getAverageRatingByMarketDeckId(
-        marketDeckId,
-      );
+    // Получаем все комментарии для колоды
+    const comments =
+      await this.marketCommentRepository.findByMarketDeckId(marketDeckId);
 
-    // Получаем количество комментариев к колоде
-    const commentCount =
-      await this.marketCommentRepository.countByMarketDeckId(marketDeckId);
+    const commentCount = comments.length;
 
-    // Обновляем рейтинг и количество комментариев колоды
+    // Считаем распределение оценок
+    const ratingBreakdown = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
+
+    comments.forEach((comment) => {
+      const rating = String(comment.rating);
+      if (ratingBreakdown[rating] !== undefined) {
+        ratingBreakdown[rating]++;
+      }
+    });
+
+    // Обновляем рейтинг колоды и его распределение
     await this.marketDeckRepository.updateRating(
       marketDeckId,
-      averageRating,
       commentCount,
+      ratingBreakdown,
     );
   }
 }

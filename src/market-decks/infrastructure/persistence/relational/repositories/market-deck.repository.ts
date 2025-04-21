@@ -159,8 +159,8 @@ export class MarketDeckRelationalRepository implements MarketDeckRepository {
 
   async updateRating(
     id: MarketDeck['id'],
-    newRating: number,
     commentCount: number,
+    ratingBreakdown: Record<string, number>,
   ): Promise<MarketDeck | null> {
     const entity = await this.marketDeckRepository.findOne({
       where: { id, deleted: false },
@@ -170,8 +170,9 @@ export class MarketDeckRelationalRepository implements MarketDeckRepository {
       return null;
     }
 
-    entity.rating = newRating;
     entity.commentsCount = commentCount;
+    entity.ratingBreakdown = ratingBreakdown;
+
     const updatedEntity = await this.marketDeckRepository.save(entity);
 
     return MarketDeckMapper.toDomain(updatedEntity);

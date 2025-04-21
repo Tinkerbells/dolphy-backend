@@ -50,8 +50,8 @@ export abstract class MarketDeckRepository {
 
   abstract updateRating(
     id: MarketDeck['id'],
-    newRating: number,
     commentCount: number,
+    ratingBreakdown: Record<string, number>,
   ): Promise<MarketDeck | null>;
 
   abstract remove(id: MarketDeck['id']): Promise<void>;

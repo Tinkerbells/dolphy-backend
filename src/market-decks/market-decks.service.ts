@@ -59,7 +59,7 @@ export class MarketDecksService {
     newMarketDeck.description = originalDeck.description;
     newMarketDeck.authorId = userId;
     newMarketDeck.downloadCount = 0;
-    newMarketDeck.rating = 0;
+    newMarketDeck.ratingBreakdown = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
     newMarketDeck.commentsCount = 0;
     newMarketDeck.cardsCount = cardsCount;
     newMarketDeck.deleted = false;

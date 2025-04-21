@@ -32,8 +32,8 @@ export class MarketDeckEntity extends EntityRelationalHelper {
   @Column({ default: 0 })
   downloadCount: number;
 
-  @Column({ type: 'float', default: 0 })
-  rating: number;
+  @Column({ type: 'json', default: '{"1":0,"2":0,"3":0,"4":0,"5":0}' })
+  ratingBreakdown: Record<string, number>;
 
   @Column({ default: 0 })
   commentsCount: number;

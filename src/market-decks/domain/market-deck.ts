@@ -54,11 +54,17 @@ export class MarketDeck {
   downloadCount: number;
 
   @ApiProperty({
-    type: Number,
-    example: 4.7,
-    description: 'Средний рейтинг колоды',
+    type: Object,
+    example: {
+      '1': 14,
+      '2': 7,
+      '3': 25,
+      '4': 104,
+      '5': 809,
+    },
+    description: 'Распределение оценок по значениям',
   })
-  rating: number;
+  ratingBreakdown: Record<string, number>;
 
   @ApiProperty({
     type: Number,

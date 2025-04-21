@@ -11,7 +11,13 @@ export class MarketDeckMapper {
     domainEntity.description = raw.description;
     domainEntity.tags = raw.tags || [];
     domainEntity.downloadCount = raw.downloadCount;
-    domainEntity.rating = raw.rating;
+    domainEntity.ratingBreakdown = raw.ratingBreakdown || {
+      '1': 0,
+      '2': 0,
+      '3': 0,
+      '4': 0,
+      '5': 0,
+    };
     domainEntity.commentsCount = raw.commentsCount;
     domainEntity.cardsCount = raw.cardsCount;
     domainEntity.deleted = raw.deleted;
@@ -32,7 +38,13 @@ export class MarketDeckMapper {
     persistenceEntity.description = domainEntity.description;
     persistenceEntity.tags = domainEntity.tags;
     persistenceEntity.downloadCount = domainEntity.downloadCount;
-    persistenceEntity.rating = domainEntity.rating;
+    persistenceEntity.ratingBreakdown = domainEntity.ratingBreakdown || {
+      '1': 0,
+      '2': 0,
+      '3': 0,
+      '4': 0,
+      '5': 0,
+    };
     persistenceEntity.commentsCount = domainEntity.commentsCount;
     persistenceEntity.cardsCount = domainEntity.cardsCount;
     persistenceEntity.deleted = domainEntity.deleted;
