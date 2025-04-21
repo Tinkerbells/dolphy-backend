@@ -1,11 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsBoolean,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  IsUUID,
-} from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
 
 export class CreateMarketDeckDto {
   @ApiProperty({
@@ -16,24 +10,4 @@ export class CreateMarketDeckDto {
   @IsUUID('4')
   @IsNotEmpty()
   deckId: string;
-
-  @ApiPropertyOptional({
-    type: Boolean,
-    example: true,
-    default: true,
-    description: 'Флаг публичной доступности колоды',
-  })
-  @IsBoolean()
-  @IsOptional()
-  isPublic?: boolean;
-
-  @ApiPropertyOptional({
-    type: Boolean,
-    example: true,
-    default: true,
-    description: 'Флаг разрешения копирования колоды',
-  })
-  @IsBoolean()
-  @IsOptional()
-  isCopyAllowed?: boolean;
 }

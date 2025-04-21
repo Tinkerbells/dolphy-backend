@@ -41,8 +41,7 @@ export class MarketDeckRelationalRepository implements MarketDeckRepository {
   }): Promise<MarketDeck[]> {
     const queryBuilder = this.marketDeckRepository
       .createQueryBuilder('market_deck')
-      .where('market_deck.deleted = :deleted', { deleted: false })
-      .andWhere('market_deck.isPublic = :isPublic', { isPublic: true });
+      .where('market_deck.deleted = :deleted', { deleted: false });
 
     if (authorId) {
       queryBuilder.andWhere('market_deck.authorId = :authorId', { authorId });
@@ -84,7 +83,7 @@ export class MarketDeckRelationalRepository implements MarketDeckRepository {
     sortBy?: 'downloadCount' | 'rating';
   }): Promise<MarketDeck[]> {
     const entities = await this.marketDeckRepository.find({
-      where: { deleted: false, isPublic: true },
+      where: { deleted: false },
       order: { [sortBy]: 'DESC' },
       skip: (paginationOptions.page - 1) * paginationOptions.limit,
       take: paginationOptions.limit,

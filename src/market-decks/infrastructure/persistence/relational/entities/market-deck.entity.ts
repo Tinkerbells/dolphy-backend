@@ -29,12 +29,6 @@ export class MarketDeckEntity extends EntityRelationalHelper {
   @Column('simple-array', { nullable: true })
   tags: string[];
 
-  @Column({ default: true })
-  isPublic: boolean;
-
-  @Column({ default: true })
-  isCopyAllowed: boolean;
-
   @Column({ default: 0 })
   downloadCount: number;
 
