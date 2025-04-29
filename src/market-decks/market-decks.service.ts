@@ -13,6 +13,7 @@ import { MarketDeck } from './domain/market-deck';
 import { DecksService } from '../decks/decks.service';
 import { CardsService } from '../cards/cards.service';
 import { FindAllMarketDecksDto } from './dto/find-all-market-decks.dto';
+import { OperationResultDto } from '../utils/dto/operation-result.dto';
 
 @Injectable()
 export class MarketDecksService {
@@ -193,7 +194,10 @@ export class MarketDecksService {
     return { id: copiedDeck.id };
   }
 
-  async remove(id: MarketDeck['id'], userId: string): Promise<void> {
+  async remove(
+    id: MarketDeck['id'],
+    userId: string,
+  ): Promise<OperationResultDto> {
     const marketDeck = await this.marketDeckRepository.findById(id);
     if (!marketDeck) {
       throw new NotFoundException('Колода не найдена');
@@ -205,5 +209,10 @@ export class MarketDecksService {
     }
 
     await this.marketDeckRepository.remove(id);
+
+    return {
+      success: true,
+      message: 'Market deck successfully deleted',
+    };
   }
 }

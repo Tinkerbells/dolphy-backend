@@ -14,6 +14,7 @@ import { FsrsService } from '../fsrs/fsrs.service';
 import { RatingType } from '../review-logs/domain/review-log';
 import { NoteRepository } from 'src/notes/infrastructure/persistence/note.repository';
 import { Note } from 'src/notes/domain/note';
+import { OperationResultDto } from '../utils/dto/operation-result.dto';
 
 @Injectable()
 export class CardsService {
@@ -309,7 +310,7 @@ export class CardsService {
     };
   }
 
-  async softDelete(id: Card['id']): Promise<void> {
+  async softDelete(id: Card['id']): Promise<OperationResultDto> {
     await this.cardRepository.update(id, { deleted: true });
 
     // Также отмечаем содержимое карточки как удаленное
@@ -319,9 +320,14 @@ export class CardsService {
         deleted: true,
       });
     }
+
+    return {
+      success: true,
+      message: 'Card successfully deleted',
+    };
   }
 
-  async restore(id: Card['id']): Promise<void> {
+  async restore(id: Card['id']): Promise<OperationResultDto> {
     await this.cardRepository.update(id, { deleted: false });
 
     // Также восстанавливаем содержимое карточки
@@ -331,6 +337,11 @@ export class CardsService {
         deleted: false,
       });
     }
+
+    return {
+      success: true,
+      message: 'Card successfully restored',
+    };
   }
 
   remove(id: Card['id']): Promise<void> {

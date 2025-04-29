@@ -5,6 +5,7 @@ import { DeckRepository } from './infrastructure/persistence/deck.repository';
 import { IPaginationOptions } from '../utils/types/pagination-options';
 import { Deck } from './domain/deck';
 import { v4 as uuidv4 } from 'uuid';
+import { OperationResultDto } from '../utils/dto/operation-result.dto';
 
 @Injectable()
 export class DecksService {
@@ -60,8 +61,12 @@ export class DecksService {
     return this.deckRepository.update(id, updateData);
   }
 
-  async softDelete(id: Deck['id']): Promise<void> {
+  async softDelete(id: Deck['id']): Promise<OperationResultDto> {
     await this.deckRepository.update(id, { deleted: true });
+    return {
+      success: true,
+      message: 'Deck successfully deleted',
+    };
   }
 
   remove(id: Deck['id']): Promise<void> {

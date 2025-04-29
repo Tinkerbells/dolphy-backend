@@ -39,6 +39,7 @@ import { FsrsService } from '../fsrs/fsrs.service';
 // import { CardStatisticsDto } from './dto/card-statistics.dto';
 import { GradeCardDto } from './dto/grade-card.dto';
 import { SuspendCardDto } from './dto/suspend-card.dto';
+import { OperationResultDto } from '../utils/dto/operation-result.dto';
 // import { MoveToDecksDto } from './dto/move-to-decks.dto';
 
 @ApiTags('Cards')
@@ -287,7 +288,8 @@ export class CardsController {
     description: 'Уникальный идентификатор карточки',
   })
   @ApiOkResponse({
-    description: 'Карточка успешно удалена (мягкое удаление)',
+    type: OperationResultDto,
+    description: 'Card successfully deleted',
   })
   @HttpCode(HttpStatus.OK)
   remove(@Param('id') id: string) {
@@ -303,7 +305,8 @@ export class CardsController {
     description: 'Уникальный идентификатор карточки',
   })
   @ApiOkResponse({
-    description: 'Карточка успешно восстановлена',
+    type: OperationResultDto,
+    description: 'Card successfully restored',
   })
   @HttpCode(HttpStatus.OK)
   restore(@Param('id') id: string) {

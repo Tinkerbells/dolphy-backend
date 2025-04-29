@@ -29,6 +29,7 @@ import {
 } from '../utils/dto/infinity-pagination-response.dto';
 import { infinityPagination } from '../utils/infinity-pagination';
 import { FindAllMarketCommentsDto } from './dto/find-all-market-comments.dto';
+import { OperationResultDto } from '../utils/dto/operation-result.dto';
 
 @ApiTags('Market Comments')
 @ApiBearerAuth()
@@ -121,7 +122,11 @@ export class MarketCommentsController {
     required: true,
     description: 'ID комментария',
   })
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOkResponse({
+    type: OperationResultDto,
+    description: 'Comment successfully deleted',
+  })
+  @HttpCode(HttpStatus.OK)
   remove(@Param('id') id: string, @Request() req) {
     return this.marketCommentsService.remove(id, req.user.id);
   }

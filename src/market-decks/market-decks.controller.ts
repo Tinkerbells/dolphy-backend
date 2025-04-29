@@ -31,6 +31,7 @@ import {
 } from '../utils/dto/infinity-pagination-response.dto';
 import { infinityPagination } from '../utils/infinity-pagination';
 import { FindAllMarketDecksDto } from './dto/find-all-market-decks.dto';
+import { OperationResultDto } from '../utils/dto/operation-result.dto';
 
 @ApiTags('Market Decks')
 @ApiBearerAuth()
@@ -170,7 +171,11 @@ export class MarketDecksController {
     required: true,
     description: 'ID колоды в маркетплейсе',
   })
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOkResponse({
+    type: OperationResultDto,
+    description: 'Market deck successfully deleted',
+  })
+  @HttpCode(HttpStatus.OK)
   remove(@Param('id') id: string, @Request() req) {
     return this.marketDecksService.remove(id, req.user.id);
   }

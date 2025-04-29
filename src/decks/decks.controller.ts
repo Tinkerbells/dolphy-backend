@@ -9,6 +9,8 @@ import {
   UseGuards,
   Query,
   Request,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { DecksService } from './decks.service';
 import { CreateDeckDto } from './dto/create-deck.dto';
@@ -28,6 +30,7 @@ import {
 } from '../utils/dto/infinity-pagination-response.dto';
 import { infinityPagination } from '../utils/infinity-pagination';
 import { FindAllDecksDto } from './dto/find-all-decks.dto';
+import { OperationResultDto } from '../utils/dto/operation-result.dto';
 
 @ApiTags('Decks')
 @ApiBearerAuth()
@@ -100,6 +103,11 @@ export class DecksController {
     type: String,
     required: true,
   })
+  @ApiOkResponse({
+    type: OperationResultDto,
+    description: 'Deck successfully deleted',
+  })
+  @HttpCode(HttpStatus.OK)
   remove(@Param('id') id: string) {
     return this.decksService.softDelete(id);
   }

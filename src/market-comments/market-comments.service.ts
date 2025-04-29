@@ -10,6 +10,7 @@ import { MarketCommentRepository } from './infrastructure/persistence/market-com
 import { MarketComment } from '../market-comments/domain/market-comment';
 import { FindAllMarketCommentsDto } from './dto/find-all-market-comments.dto';
 import { MarketDeckRepository } from 'src/market-decks/infrastructure/persistence/market-deck.repository';
+import { OperationResultDto } from '../utils/dto/operation-result.dto';
 
 @Injectable()
 export class MarketCommentsService {
@@ -94,7 +95,10 @@ export class MarketCommentsService {
     return comment;
   }
 
-  async remove(id: MarketComment['id'], userId: string): Promise<void> {
+  async remove(
+    id: MarketComment['id'],
+    userId: string,
+  ): Promise<OperationResultDto> {
     const comment = await this.marketCommentRepository.findById(id);
     if (!comment) {
       throw new NotFoundException('Комментарий не найден');
@@ -109,6 +113,11 @@ export class MarketCommentsService {
 
     // Обновляем рейтинг колоды
     await this.updateDeckRating(comment.marketDeckId);
+
+    return {
+      success: true,
+      message: 'Comment successfully deleted',
+    };
   }
 
   private async updateDeckRating(marketDeckId: string): Promise<void> {
