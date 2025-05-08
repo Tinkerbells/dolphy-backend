@@ -13,7 +13,7 @@ import { DecksService } from '../decks/decks.service';
 import { CardsService } from '../cards/cards.service';
 import { FindAllMarketDecksDto } from './dto/find-all-market-decks.dto';
 import { OperationResultDto } from '../utils/dto/operation-result.dto';
-import { I18nContext } from 'nestjs-i18n';
+import { t } from 'src/utils/i18n';
 
 @Injectable()
 export class MarketDecksService {
@@ -27,24 +27,19 @@ export class MarketDecksService {
     createMarketDeckDto: CreateMarketDeckDto,
     userId: string,
   ): Promise<MarketDeck> {
-    const i18n = I18nContext.current();
-
-    if (!i18n) {
-      throw new Error('I18nContext is not available');
-    }
     // Проверяем, существует ли оригинальная колода
     const originalDeck = await this.decksService.findById(
       createMarketDeckDto.deckId,
     );
     if (!originalDeck) {
       throw new NotFoundException(
-        i18n.t('market-decks.errors.originalDeckNotFound'),
+        t('market-decks.errors.originalDeckNotFound'),
       );
     }
 
     // Проверяем, имеет ли пользователь право публиковать эту колоду
     if (originalDeck.userId != userId) {
-      throw new ForbiddenException(i18n.t('market-decks.errors.noPermission'));
+      throw new ForbiddenException(t('market-decks.errors.noPermission'));
     }
 
     // Проверяем, не опубликована ли уже эта колода
@@ -52,9 +47,7 @@ export class MarketDecksService {
       createMarketDeckDto.deckId,
     );
     if (existingMarketDeck) {
-      throw new BadRequestException(
-        i18n.t('market-decks.errors.alreadyPublished'),
-      );
+      throw new BadRequestException(t('market-decks.errors.alreadyPublished'));
     }
 
     // Получаем количество карточек в колоде
@@ -109,14 +102,9 @@ export class MarketDecksService {
   }
 
   async findById(id: MarketDeck['id']): Promise<MarketDeck> {
-    const i18n = I18nContext.current();
-
-    if (!i18n) {
-      throw new Error('I18nContext is not available');
-    }
     const marketDeck = await this.marketDeckRepository.findById(id);
     if (!marketDeck) {
-      throw new NotFoundException(i18n.t('market-decks.notFound'));
+      throw new NotFoundException(t('market-decks.notFound'));
     }
     return marketDeck;
   }
@@ -126,19 +114,14 @@ export class MarketDecksService {
     updateMarketDeckDto: UpdateMarketDeckDto,
     userId: string,
   ): Promise<MarketDeck> {
-    const i18n = I18nContext.current();
-
-    if (!i18n) {
-      throw new Error('I18nContext is not available');
-    }
     const marketDeck = await this.marketDeckRepository.findById(id);
     if (!marketDeck) {
-      throw new NotFoundException(i18n.t('market-decks.notFound'));
+      throw new NotFoundException(t('market-decks.notFound'));
     }
 
     // Проверяем, имеет ли пользователь право обновлять эту колоду
     if (marketDeck.authorId !== userId) {
-      throw new ForbiddenException(i18n.t('market-decks.errors.noPermission'));
+      throw new ForbiddenException(t('market-decks.errors.noPermission'));
     }
 
     // Обновляем только разрешенные поля
@@ -146,22 +129,17 @@ export class MarketDecksService {
 
     const updatedDeck = await this.marketDeckRepository.update(id, updateData);
     if (!updatedDeck) {
-      throw new NotFoundException(i18n.t('common.error'));
+      throw new NotFoundException(t('common.error'));
     }
 
     return updatedDeck;
   }
 
   async incrementDownloadCount(id: MarketDeck['id']): Promise<MarketDeck> {
-    const i18n = I18nContext.current();
-
-    if (!i18n) {
-      throw new Error('I18nContext is not available');
-    }
     const marketDeck =
       await this.marketDeckRepository.incrementDownloadCount(id);
     if (!marketDeck) {
-      throw new NotFoundException(i18n.t('market-decks.notFound'));
+      throw new NotFoundException(t('market-decks.notFound'));
     }
     return marketDeck;
   }
@@ -170,20 +148,15 @@ export class MarketDecksService {
     id: MarketDeck['id'],
     userId: string,
   ): Promise<{ id: string }> {
-    const i18n = I18nContext.current();
-
-    if (!i18n) {
-      throw new Error('I18nContext is not available');
-    }
     const marketDeck = await this.marketDeckRepository.findById(id);
     if (!marketDeck) {
-      throw new NotFoundException(i18n.t('market-decks.notFound'));
+      throw new NotFoundException(t('market-decks.notFound'));
     }
     // Получаем оригинальную колоду
     const originalDeck = await this.decksService.findById(marketDeck.deckId);
     if (!originalDeck) {
       throw new NotFoundException(
-        i18n.t('market-decks.errors.originalDeckNotFound'),
+        t('market-decks.errors.originalDeckNotFound'),
       );
     }
 
@@ -228,26 +201,21 @@ export class MarketDecksService {
     id: MarketDeck['id'],
     userId: string,
   ): Promise<OperationResultDto> {
-    const i18n = I18nContext.current();
-
-    if (!i18n) {
-      throw new Error('I18nContext is not available');
-    }
     const marketDeck = await this.marketDeckRepository.findById(id);
     if (!marketDeck) {
-      throw new NotFoundException(i18n.t('market-decks.notFound'));
+      throw new NotFoundException(t('market-decks.notFound'));
     }
 
     // Проверяем, имеет ли пользователь право удалять эту колоду
     if (marketDeck.authorId !== userId) {
-      throw new ForbiddenException(i18n.t('market-decks.errors.noPermission'));
+      throw new ForbiddenException(t('market-decks.errors.noPermission'));
     }
 
     await this.marketDeckRepository.remove(id);
 
     return {
       success: true,
-      message: i18n.t('market-decks.deleted'),
+      message: t('market-decks.deleted'),
     };
   }
 }

@@ -15,6 +15,7 @@ import { RatingType } from '../review-logs/domain/review-log';
 import { NoteRepository } from 'src/notes/infrastructure/persistence/note.repository';
 import { Note } from 'src/notes/domain/note';
 import { OperationResultDto } from '../utils/dto/operation-result.dto';
+import { t } from 'src/utils/i18n';
 
 @Injectable()
 export class CardsService {
@@ -191,7 +192,7 @@ export class CardsService {
   async grade(id: Card['id'], rating: RatingType): Promise<{ card: Card }> {
     const card = await this.cardRepository.findById(id);
     if (!card) {
-      throw new Error('Card not found');
+      throw new NotFoundException(t('cards.notFound'));
     }
 
     // Применяем оценку с помощью FSRS
@@ -200,7 +201,7 @@ export class CardsService {
     // Обновляем карточку
     const savedCard = await this.cardRepository.update(id, updatedCard);
     if (!savedCard) {
-      throw new Error('Failed to update card');
+      throw new Error(t('cards.errors.failedToUpdate'));
     }
 
     // Создаем запись о проверке
