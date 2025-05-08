@@ -4,7 +4,6 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
 import { CreateMarketDeckDto } from './dto/create-market-deck.dto';
 import { UpdateMarketDeckDto } from './dto/update-market-deck.dto';
 import { MarketDeckRepository } from './infrastructure/persistence/market-deck.repository';
@@ -14,6 +13,7 @@ import { DecksService } from '../decks/decks.service';
 import { CardsService } from '../cards/cards.service';
 import { FindAllMarketDecksDto } from './dto/find-all-market-decks.dto';
 import { OperationResultDto } from '../utils/dto/operation-result.dto';
+import { I18nContext } from 'nestjs-i18n';
 
 @Injectable()
 export class MarketDecksService {
@@ -27,17 +27,24 @@ export class MarketDecksService {
     createMarketDeckDto: CreateMarketDeckDto,
     userId: string,
   ): Promise<MarketDeck> {
+    const i18n = I18nContext.current();
+
+    if (!i18n) {
+      throw new Error('I18nContext is not available');
+    }
     // Проверяем, существует ли оригинальная колода
     const originalDeck = await this.decksService.findById(
       createMarketDeckDto.deckId,
     );
     if (!originalDeck) {
-      throw new NotFoundException('Оригинальная колода не найдена');
+      throw new NotFoundException(
+        i18n.t('market-decks.errors.originalDeckNotFound'),
+      );
     }
 
     // Проверяем, имеет ли пользователь право публиковать эту колоду
     if (originalDeck.userId != userId) {
-      throw new ForbiddenException('Вы не можете публиковать чужую колоду');
+      throw new ForbiddenException(i18n.t('market-decks.errors.noPermission'));
     }
 
     // Проверяем, не опубликована ли уже эта колода
@@ -45,7 +52,9 @@ export class MarketDecksService {
       createMarketDeckDto.deckId,
     );
     if (existingMarketDeck) {
-      throw new BadRequestException('Эта колода уже опубликована');
+      throw new BadRequestException(
+        i18n.t('market-decks.errors.alreadyPublished'),
+      );
     }
 
     // Получаем количество карточек в колоде
@@ -54,7 +63,6 @@ export class MarketDecksService {
 
     // Создаем запись о колоде в маркетплейсе
     const newMarketDeck = new MarketDeck();
-    newMarketDeck.id = uuidv4();
     newMarketDeck.deckId = createMarketDeckDto.deckId;
     newMarketDeck.title = originalDeck.name;
     newMarketDeck.description = originalDeck.description;
@@ -101,9 +109,14 @@ export class MarketDecksService {
   }
 
   async findById(id: MarketDeck['id']): Promise<MarketDeck> {
+    const i18n = I18nContext.current();
+
+    if (!i18n) {
+      throw new Error('I18nContext is not available');
+    }
     const marketDeck = await this.marketDeckRepository.findById(id);
     if (!marketDeck) {
-      throw new NotFoundException('Колода не найдена');
+      throw new NotFoundException(i18n.t('market-decks.notFound'));
     }
     return marketDeck;
   }
@@ -113,14 +126,19 @@ export class MarketDecksService {
     updateMarketDeckDto: UpdateMarketDeckDto,
     userId: string,
   ): Promise<MarketDeck> {
+    const i18n = I18nContext.current();
+
+    if (!i18n) {
+      throw new Error('I18nContext is not available');
+    }
     const marketDeck = await this.marketDeckRepository.findById(id);
     if (!marketDeck) {
-      throw new NotFoundException('Колода не найдена');
+      throw new NotFoundException(i18n.t('market-decks.notFound'));
     }
 
     // Проверяем, имеет ли пользователь право обновлять эту колоду
     if (marketDeck.authorId !== userId) {
-      throw new ForbiddenException('Вы не можете обновлять чужую колоду');
+      throw new ForbiddenException(i18n.t('market-decks.errors.noPermission'));
     }
 
     // Обновляем только разрешенные поля
@@ -128,17 +146,22 @@ export class MarketDecksService {
 
     const updatedDeck = await this.marketDeckRepository.update(id, updateData);
     if (!updatedDeck) {
-      throw new NotFoundException('Не удалось обновить колоду');
+      throw new NotFoundException(i18n.t('common.error'));
     }
 
     return updatedDeck;
   }
 
   async incrementDownloadCount(id: MarketDeck['id']): Promise<MarketDeck> {
+    const i18n = I18nContext.current();
+
+    if (!i18n) {
+      throw new Error('I18nContext is not available');
+    }
     const marketDeck =
       await this.marketDeckRepository.incrementDownloadCount(id);
     if (!marketDeck) {
-      throw new NotFoundException('Колода не найдена');
+      throw new NotFoundException(i18n.t('market-decks.notFound'));
     }
     return marketDeck;
   }
@@ -147,14 +170,21 @@ export class MarketDecksService {
     id: MarketDeck['id'],
     userId: string,
   ): Promise<{ id: string }> {
+    const i18n = I18nContext.current();
+
+    if (!i18n) {
+      throw new Error('I18nContext is not available');
+    }
     const marketDeck = await this.marketDeckRepository.findById(id);
     if (!marketDeck) {
-      throw new NotFoundException('Колода не найдена');
+      throw new NotFoundException(i18n.t('market-decks.notFound'));
     }
     // Получаем оригинальную колоду
     const originalDeck = await this.decksService.findById(marketDeck.deckId);
     if (!originalDeck) {
-      throw new NotFoundException('Оригинальная колода не найдена');
+      throw new NotFoundException(
+        i18n.t('market-decks.errors.originalDeckNotFound'),
+      );
     }
 
     // Создаем копию колоды
@@ -198,21 +228,26 @@ export class MarketDecksService {
     id: MarketDeck['id'],
     userId: string,
   ): Promise<OperationResultDto> {
+    const i18n = I18nContext.current();
+
+    if (!i18n) {
+      throw new Error('I18nContext is not available');
+    }
     const marketDeck = await this.marketDeckRepository.findById(id);
     if (!marketDeck) {
-      throw new NotFoundException('Колода не найдена');
+      throw new NotFoundException(i18n.t('market-decks.notFound'));
     }
 
     // Проверяем, имеет ли пользователь право удалять эту колоду
     if (marketDeck.authorId !== userId) {
-      throw new ForbiddenException('Вы не можете удалять чужую колоду');
+      throw new ForbiddenException(i18n.t('market-decks.errors.noPermission'));
     }
 
     await this.marketDeckRepository.remove(id);
 
     return {
       success: true,
-      message: 'Market deck successfully deleted',
+      message: i18n.t('market-decks.deleted'),
     };
   }
 }

@@ -1,0 +1,11 @@
+{
+  "created": "Deck created successfully",
+  "updated": "Deck updated successfully",
+  "deleted": "Deck deleted successfully",
+  "notFound": "Deck not found",
+  "errors": {
+    "nameTooLong": "Deck name must be no more than 100 characters",
+    "descriptionTooLong": "Deck description must be no more than 500 characters",
+    "noPermission": "You don't have permission to modify this deck"
+  }
+}

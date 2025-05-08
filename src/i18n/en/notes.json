@@ -1,0 +1,12 @@
+{
+  "created": "Note created successfully",
+  "updated": "Note updated successfully",
+  "deleted": "Note deleted successfully",
+  "notFound": "Note not found",
+  "errors": {
+    "questionRequired": "Question is required",
+    "answerRequired": "Answer is required",
+    "questionTooLong": "Question must be no more than 1000 characters",
+    "answerTooLong": "Answer must be no more than 2000 characters"
+  }
+}

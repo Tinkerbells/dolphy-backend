@@ -69,6 +69,10 @@ import { MarketCommentsModule } from './market-comments/market-comments.module';
         fallbackLanguage: configService.getOrThrow('app.fallbackLanguage', {
           infer: true,
         }),
+        fallbacks: {
+          'ru-*': 'ru',
+          'en-*': 'en',
+        },
         loaderOptions: { path: path.join(__dirname, '/i18n/'), watch: true },
       }),
       resolvers: [

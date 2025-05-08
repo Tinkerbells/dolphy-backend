@@ -1,0 +1,10 @@
+{
+  "mustBeNotEmpty": "This field cannot be empty",
+  "invalidEmail": "Invalid email format",
+  "passwordTooShort": "Password must be at least 6 characters long",
+  "invalidUUID": "Invalid UUID format",
+  "invalidNumber": "Invalid number",
+  "invalidDate": "Invalid date format",
+  "valueTooSmall": "Value is too small",
+  "valueTooLarge": "Value is too large"
+}

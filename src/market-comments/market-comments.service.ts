@@ -4,13 +4,13 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
 import { CreateMarketCommentDto } from './dto/create-market-comment.dto';
 import { MarketCommentRepository } from './infrastructure/persistence/market-comment.repository';
 import { MarketComment } from '../market-comments/domain/market-comment';
 import { FindAllMarketCommentsDto } from './dto/find-all-market-comments.dto';
 import { MarketDeckRepository } from 'src/market-decks/infrastructure/persistence/market-deck.repository';
 import { OperationResultDto } from '../utils/dto/operation-result.dto';
+import { I18nContext } from 'nestjs-i18n';
 
 @Injectable()
 export class MarketCommentsService {
@@ -23,12 +23,16 @@ export class MarketCommentsService {
     createMarketCommentDto: CreateMarketCommentDto,
     userId: string,
   ): Promise<MarketComment> {
+    const i18n = I18nContext.current();
+    if (!i18n) {
+      throw new Error('I18nContext is not available');
+    }
     // Проверяем, существует ли колода
     const marketDeck = await this.marketDeckRepository.findById(
       createMarketCommentDto.marketDeckId,
     );
     if (!marketDeck) {
-      throw new NotFoundException('Колода не найдена');
+      throw new NotFoundException(i18n.t('market-decks.notFound'));
     }
 
     // Проверяем, оставлял ли пользователь уже комментарий к этой колоде
@@ -39,13 +43,12 @@ export class MarketCommentsService {
       );
     if (existingComment) {
       throw new BadRequestException(
-        'Вы уже оставили комментарий к этой колоде',
+        i18n.t('market-comments.errors.alreadyCommented'),
       );
     }
 
     // Создаем комментарий
     const newComment = new MarketComment();
-    newComment.id = uuidv4();
     newComment.marketDeckId = createMarketCommentDto.marketDeckId;
     newComment.userId = userId;
     newComment.text = createMarketCommentDto.text;

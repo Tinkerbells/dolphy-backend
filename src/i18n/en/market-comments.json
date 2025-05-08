@@ -1,0 +1,9 @@
+{
+  "created": "Comment added successfully",
+  "deleted": "Comment deleted successfully",
+  "notFound": "Comment not found",
+  "errors": {
+    "alreadyCommented": "You have already commented on this deck",
+    "noPermission": "You don't have permission to delete this comment"
+  }
+}

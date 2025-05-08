@@ -1,0 +1,10 @@
+{
+  "mustBeNotEmpty": "Это поле не может быть пустым",
+  "invalidEmail": "Неверный формат email",
+  "passwordTooShort": "Пароль должен содержать минимум 6 символов",
+  "invalidUUID": "Неверный формат UUID",
+  "invalidNumber": "Неверный формат числа",
+  "invalidDate": "Неверный формат даты",
+  "valueTooSmall": "Значение слишком маленькое",
+  "valueTooLarge": "Значение слишком большое"
+}

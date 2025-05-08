@@ -1,0 +1,12 @@
+{
+  "confirmEmail": "Подтверждение электронной почты",
+  "resetPassword": "Сброс пароля",
+  "successfulOperation": "Операция успешно выполнена",
+  "error": "Ошибка",
+  "notFound": "Не найдено",
+  "unauthorized": "Не авторизован",
+  "forbidden": "Доступ запрещен",
+  "badRequest": "Некорректный запрос",
+  "invalidData": "Недопустимые данные",
+  "serverError": "Ошибка сервера"
+}

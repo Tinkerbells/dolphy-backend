@@ -1,0 +1,29 @@
+{
+  "created": "Card created successfully",
+  "updated": "Card updated successfully",
+  "deleted": "Card deleted successfully",
+  "restored": "Card restored successfully",
+  "notFound": "Card not found",
+  "cardGraded": "Card graded successfully",
+  "cardState": {
+    "new": "New",
+    "learning": "Learning",
+    "review": "Review",
+    "relearning": "Relearning"
+  },
+  "grade": {
+    "again": "Again",
+    "hard": "Hard",
+    "good": "Good",
+    "easy": "Easy"
+  },
+  "errors": {
+    "invalidRating": "Invalid rating",
+    "failedToUpdate": "Failed to update card"
+  },
+  "success": {
+    "reset": "Card reset successfully",
+    "undoGrade": "Last grade undone successfully",
+    "suspended": "Card suspended successfully"
+  }
+}

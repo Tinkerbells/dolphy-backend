@@ -1,0 +1,11 @@
+{
+  "created": "Deck published successfully",
+  "deleted": "Deck unpublished successfully",
+  "notFound": "Market deck not found",
+  "copied": "Deck copied successfully",
+  "errors": {
+    "alreadyPublished": "This deck is already published",
+    "noPermission": "You don't have permission to modify this market deck",
+    "originalDeckNotFound": "Original deck not found"
+  }
+}

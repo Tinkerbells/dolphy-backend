@@ -1,0 +1,12 @@
+{
+  "created": "User created successfully",
+  "updated": "User updated successfully",
+  "deleted": "User deleted successfully",
+  "notFound": "User not found",
+  "errors": {
+    "emailAlreadyExists": "Email already exists",
+    "roleNotExists": "Role does not exist",
+    "statusNotExists": "Status does not exist",
+    "imageNotExists": "Image does not exist"
+  }
+}

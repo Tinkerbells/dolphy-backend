@@ -40,6 +40,7 @@ import { FsrsService } from '../fsrs/fsrs.service';
 import { GradeCardDto } from './dto/grade-card.dto';
 import { SuspendCardDto } from './dto/suspend-card.dto';
 import { OperationResultDto } from '../utils/dto/operation-result.dto';
+import { I18nContext } from 'nestjs-i18n';
 // import { MoveToDecksDto } from './dto/move-to-decks.dto';
 
 @ApiTags('Cards')
@@ -184,9 +185,13 @@ export class CardsController {
   })
   @HttpCode(HttpStatus.OK)
   grade(@Param('id') id: string, @Body() body: GradeCardDto) {
+    const i18n = I18nContext.current();
+    if (!i18n) {
+      throw new Error('I18nContext is not available');
+    }
     // Проверяем, валидна ли оценка
     if (!ratings.includes(body.rating)) {
-      throw new BadRequestException('Недопустимая оценка');
+      throw new BadRequestException(i18n.t('cards.errors.invalidRating'));
     }
 
     return this.cardsService.grade(id, body.rating);

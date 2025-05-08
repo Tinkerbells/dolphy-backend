@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateDeckDto } from './dto/create-deck.dto';
 import { UpdateDeckDto } from './dto/update-deck.dto';
 import { DeckRepository } from './infrastructure/persistence/deck.repository';
@@ -6,12 +6,26 @@ import { IPaginationOptions } from '../utils/types/pagination-options';
 import { Deck } from './domain/deck';
 import { v4 as uuidv4 } from 'uuid';
 import { OperationResultDto } from '../utils/dto/operation-result.dto';
+import { I18nContext } from 'nestjs-i18n';
 
 @Injectable()
 export class DecksService {
   constructor(private readonly deckRepository: DeckRepository) {}
 
   async create(createDeckDto: CreateDeckDto, userId: string): Promise<Deck> {
+    const i18n = I18nContext.current();
+
+    if (!i18n) {
+      throw new Error('I18nContext is not available');
+    }
+    if (createDeckDto.name.length > 100) {
+      throw new BadRequestException(i18n.t('decks.errors.nameTooLong'));
+    }
+
+    if (createDeckDto.description && createDeckDto.description.length > 500) {
+      throw new BadRequestException(i18n.t('decks.errors.descriptionTooLong'));
+    }
+
     const newDeck = new Deck();
     newDeck.id = uuidv4();
     newDeck.name = createDeckDto.name;

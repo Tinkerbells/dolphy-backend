@@ -1,0 +1,9 @@
+{
+  "created": "File uploaded successfully",
+  "notFound": "File not found",
+  "errors": {
+    "selectFile": "Please select a file",
+    "cantUploadFileType": "Cannot upload this file type",
+    "fileTooLarge": "File is too large"
+  }
+}

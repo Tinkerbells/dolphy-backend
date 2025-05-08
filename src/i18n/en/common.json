@@ -1,4 +1,12 @@
 {
   "confirmEmail": "Confirm email",
-  "resetPassword": "Reset password"
+  "resetPassword": "Reset password",
+  "successfulOperation": "Operation completed successfully",
+  "error": "Error",
+  "notFound": "Not found",
+  "unauthorized": "Unauthorized",
+  "forbidden": "Forbidden",
+  "badRequest": "Bad request",
+  "invalidData": "Invalid data",
+  "serverError": "Server error"
 }
