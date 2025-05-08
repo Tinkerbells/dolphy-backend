@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Query,
+  BadRequestException,
 } from '@nestjs/common';
 import { NotesService } from './notes.service';
 import { CreateNoteDto } from './dto/create-note.dto';
@@ -27,6 +28,7 @@ import {
 } from '../utils/dto/infinity-pagination-response.dto';
 import { infinityPagination } from '../utils/infinity-pagination';
 import { FindAllNotesDto } from './dto/find-all-notes.dto';
+import { t } from '../utils/i18n';
 
 @ApiTags('Notes')
 @ApiBearerAuth()
@@ -92,8 +94,12 @@ export class NotesController {
   @ApiOkResponse({
     type: Note,
   })
-  update(@Param('id') id: string, @Body() updateNoteDto: UpdateNoteDto) {
-    return this.notesService.update(id, updateNoteDto);
+  async update(@Param('id') id: string, @Body() updateNoteDto: UpdateNoteDto) {
+    const updatedNote = await this.notesService.update(id, updateNoteDto);
+    if (!updatedNote) {
+      throw new BadRequestException(t('notes.notFound'));
+    }
+    return updatedNote;
   }
 
   @Delete(':id')

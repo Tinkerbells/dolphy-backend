@@ -28,7 +28,7 @@ import { Session } from '../session/domain/session';
 import { SessionService } from '../session/session.service';
 import { StatusEnum } from '../statuses/statuses.enum';
 import { User } from '../users/domain/user';
-import { I18nContext } from 'nestjs-i18n';
+import { t } from 'src/utils/i18n';
 
 @Injectable()
 export class AuthService {
@@ -41,17 +41,13 @@ export class AuthService {
   ) {}
 
   async validateLogin(loginDto: AuthEmailLoginDto): Promise<LoginResponseDto> {
-    const i18n = I18nContext.current();
-    if (!i18n) {
-      throw new Error('I18nContext is not available');
-    }
     const user = await this.usersService.findByEmail(loginDto.email);
 
     if (!user) {
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
-          email: i18n.t('auth.errors.emailNotExists'),
+          email: t('auth.errors.emailNotExists'),
         },
       });
     }
@@ -83,7 +79,7 @@ export class AuthService {
       throw new UnprocessableEntityException({
         status: HttpStatus.UNPROCESSABLE_ENTITY,
         errors: {
-          password: i18n.t('auth.errors.incorrectPassword'),
+          password: t('auth.errors.incorrectPassword'),
         },
       });
     }

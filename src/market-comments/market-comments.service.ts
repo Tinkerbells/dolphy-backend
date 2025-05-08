@@ -10,7 +10,7 @@ import { MarketComment } from '../market-comments/domain/market-comment';
 import { FindAllMarketCommentsDto } from './dto/find-all-market-comments.dto';
 import { MarketDeckRepository } from 'src/market-decks/infrastructure/persistence/market-deck.repository';
 import { OperationResultDto } from '../utils/dto/operation-result.dto';
-import { I18nContext } from 'nestjs-i18n';
+import { t } from '../utils/i18n';
 
 @Injectable()
 export class MarketCommentsService {
@@ -23,16 +23,12 @@ export class MarketCommentsService {
     createMarketCommentDto: CreateMarketCommentDto,
     userId: string,
   ): Promise<MarketComment> {
-    const i18n = I18nContext.current();
-    if (!i18n) {
-      throw new Error('I18nContext is not available');
-    }
     // Проверяем, существует ли колода
     const marketDeck = await this.marketDeckRepository.findById(
       createMarketCommentDto.marketDeckId,
     );
     if (!marketDeck) {
-      throw new NotFoundException(i18n.t('market-decks.notFound'));
+      throw new NotFoundException(t('market-decks.notFound'));
     }
 
     // Проверяем, оставлял ли пользователь уже комментарий к этой колоде
@@ -43,7 +39,7 @@ export class MarketCommentsService {
       );
     if (existingComment) {
       throw new BadRequestException(
-        i18n.t('market-comments.errors.alreadyCommented'),
+        t('market-comments.errors.alreadyCommented'),
       );
     }
 
@@ -84,7 +80,7 @@ export class MarketCommentsService {
     // Проверяем, существует ли колода
     const marketDeck = await this.marketDeckRepository.findById(marketDeckId);
     if (!marketDeck) {
-      throw new NotFoundException('Колода не найдена');
+      throw new NotFoundException(t('market-decks.notFound'));
     }
 
     return this.marketCommentRepository.findByMarketDeckId(marketDeckId);
@@ -93,7 +89,7 @@ export class MarketCommentsService {
   async findById(id: MarketComment['id']): Promise<MarketComment> {
     const comment = await this.marketCommentRepository.findById(id);
     if (!comment) {
-      throw new NotFoundException('Комментарий не найден');
+      throw new NotFoundException(t('market-comments.notFound'));
     }
     return comment;
   }
@@ -104,12 +100,12 @@ export class MarketCommentsService {
   ): Promise<OperationResultDto> {
     const comment = await this.marketCommentRepository.findById(id);
     if (!comment) {
-      throw new NotFoundException('Комментарий не найден');
+      throw new NotFoundException(t('market-comments.notFound'));
     }
 
     // Проверяем, имеет ли пользователь право удалять этот комментарий
     if (comment.userId !== userId) {
-      throw new ForbiddenException('Вы не можете удалять чужой комментарий');
+      throw new ForbiddenException(t('market-comments.errors.noPermission'));
     }
 
     await this.marketCommentRepository.remove(id);
@@ -119,7 +115,7 @@ export class MarketCommentsService {
 
     return {
       success: true,
-      message: 'Comment successfully deleted',
+      message: t('market-comments.deleted'),
     };
   }
 

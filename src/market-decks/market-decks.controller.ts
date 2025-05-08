@@ -11,6 +11,8 @@ import {
   Request,
   HttpCode,
   HttpStatus,
+  BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { MarketDecksService } from './market-decks.service';
 import { CreateMarketDeckDto } from './dto/create-market-deck.dto';
@@ -32,6 +34,7 @@ import {
 import { infinityPagination } from '../utils/infinity-pagination';
 import { FindAllMarketDecksDto } from './dto/find-all-market-decks.dto';
 import { OperationResultDto } from '../utils/dto/operation-result.dto';
+import { t } from '../utils/i18n';
 
 @ApiTags('Market Decks')
 @ApiBearerAuth()
@@ -70,10 +73,16 @@ export class MarketDecksController {
       limit = 50;
     }
 
-    const marketDecks =
-      await this.marketDecksService.findAllWithPagination(query);
-
-    return infinityPagination(marketDecks, { page, limit });
+    try {
+      const marketDecks =
+        await this.marketDecksService.findAllWithPagination(query);
+      return infinityPagination(marketDecks, { page, limit });
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(t('market-decks.notFound'));
+      }
+      throw new BadRequestException(t('common.error'));
+    }
   }
 
   @Get('popular')
@@ -96,7 +105,6 @@ export class MarketDecksController {
       paginationOptions: { page, limit },
       sortBy,
     });
-
     return infinityPagination(marketDecks, { page, limit });
   }
 
@@ -155,12 +163,27 @@ export class MarketDecksController {
           type: 'string',
           example: 'cbcfa8b8-3a25-4adb-a9c6-e325f0d0f3ae',
         },
+        message: {
+          type: 'string',
+          example: 'Deck copied successfully',
+        },
       },
     },
   })
   @HttpCode(HttpStatus.OK)
-  copyDeck(@Param('id') id: string, @Request() req) {
-    return this.marketDecksService.copyDeck(id, req.user.id);
+  async copyDeck(@Param('id') id: string, @Request() req) {
+    try {
+      const result = await this.marketDecksService.copyDeck(id, req.user.id);
+      return {
+        ...result,
+        message: t('market-decks.copied'),
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(t('market-decks.notFound'));
+      }
+      throw new BadRequestException(t('common.error'));
+    }
   }
 
   @Delete(':id')

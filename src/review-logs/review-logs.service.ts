@@ -1,10 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateReviewLogDto } from './dto/create-review-log.dto';
 import { UpdateReviewLogDto } from './dto/update-review-log.dto';
 import { ReviewLogRepository } from './infrastructure/persistence/review-log.repository';
 import { IPaginationOptions } from '../utils/types/pagination-options';
 import { ReviewLog } from './domain/review-log';
-import { v4 as uuidv4 } from 'uuid';
+import { t } from '../utils/i18n';
 
 @Injectable()
 export class ReviewLogsService {
@@ -12,7 +12,6 @@ export class ReviewLogsService {
 
   async create(createReviewLogDto: CreateReviewLogDto): Promise<ReviewLog> {
     const newReviewLog = new ReviewLog();
-    newReviewLog.id = uuidv4();
     newReviewLog.cardId = createReviewLogDto.cardId;
     newReviewLog.grade = createReviewLogDto.grade;
     newReviewLog.state = createReviewLogDto.state;
@@ -42,26 +41,37 @@ export class ReviewLogsService {
     });
   }
 
-  findById(id: ReviewLog['id']): Promise<ReviewLog | null> {
-    return this.reviewLogRepository.findById(id);
+  async findById(id: ReviewLog['id']): Promise<ReviewLog | null> {
+    const reviewLog = await this.reviewLogRepository.findById(id);
+    if (!reviewLog) {
+      throw new NotFoundException(t('review-logs.notFound'));
+    }
+    return reviewLog;
   }
 
   findByIds(ids: ReviewLog['id'][]): Promise<ReviewLog[]> {
     return this.reviewLogRepository.findByIds(ids);
   }
 
-  findByCardId(cardId: string): Promise<ReviewLog[]> {
-    return this.reviewLogRepository.findByCardId(cardId);
+  async findByCardId(cardId: string): Promise<ReviewLog[]> {
+    const reviewLogs = await this.reviewLogRepository.findByCardId(cardId);
+    return reviewLogs;
   }
 
-  findLatestByCardId(cardId: string): Promise<ReviewLog | null> {
-    return this.reviewLogRepository.findLatestByCardId(cardId);
+  async findLatestByCardId(cardId: string): Promise<ReviewLog | null> {
+    const reviewLog = await this.reviewLogRepository.findLatestByCardId(cardId);
+    return reviewLog;
   }
 
   async update(
     id: ReviewLog['id'],
     updateReviewLogDto: UpdateReviewLogDto,
   ): Promise<ReviewLog | null> {
+    const reviewLog = await this.reviewLogRepository.findById(id);
+    if (!reviewLog) {
+      throw new NotFoundException(t('review-logs.notFound'));
+    }
+
     const updateData: Partial<ReviewLog> = {};
 
     if (updateReviewLogDto.grade !== undefined) {
@@ -108,10 +118,20 @@ export class ReviewLogsService {
   }
 
   async softDelete(id: ReviewLog['id']): Promise<void> {
+    const reviewLog = await this.reviewLogRepository.findById(id);
+    if (!reviewLog) {
+      throw new NotFoundException(t('review-logs.notFound'));
+    }
+
     await this.reviewLogRepository.update(id, { deleted: true });
   }
 
-  remove(id: ReviewLog['id']): Promise<void> {
+  async remove(id: ReviewLog['id']): Promise<void> {
+    const reviewLog = await this.reviewLogRepository.findById(id);
+    if (!reviewLog) {
+      throw new NotFoundException(t('review-logs.notFound'));
+    }
+
     return this.reviewLogRepository.remove(id);
   }
 

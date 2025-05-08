@@ -9,6 +9,7 @@ export function getI18n(): I18nContext {
   if (!i18n) {
     throw new Error('I18nContext is not available');
   }
+  console.log(i18n);
   return i18n;
 }
 

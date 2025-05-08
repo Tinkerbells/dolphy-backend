@@ -136,10 +136,6 @@ export class CardsService {
     return this.cardRepository.assignToDeck(cardId, deckId);
   }
 
-  // async removeFromDeck(cardId: string): Promise<Card | null> {
-  //   return this.cardRepository.removeFromDeck(cardId);
-  // }
-
   async update(
     id: Card['id'],
     updateCardDto: UpdateCardDto,
@@ -215,17 +211,23 @@ export class CardsService {
   async suspend(id: Card['id'], until: Date): Promise<Card | null> {
     const card = await this.cardRepository.findById(id);
     if (!card) {
-      return null;
+      throw new NotFoundException(t('cards.notFound'));
     }
 
     card.suspended = until;
-    return this.cardRepository.update(id, card);
+
+    const updatedCard = await this.cardRepository.update(id, card);
+    if (!updatedCard) {
+      throw new Error(t('cards.errors.failedToUpdate'));
+    }
+
+    return updatedCard;
   }
 
   async reset(id: Card['id']): Promise<Card | null> {
     const card = await this.cardRepository.findById(id);
     if (!card) {
-      return null;
+      throw new NotFoundException(t('cards.notFound'));
     }
 
     // Сбрасываем состояние карточки до начального
@@ -239,25 +241,29 @@ export class CardsService {
     card.lapses = 0;
     card.suspended = new Date();
 
-    return this.cardRepository.update(id, card);
+    const updatedCard = await this.cardRepository.update(id, card);
+    if (!updatedCard) {
+      throw new Error(t('cards.errors.failedToUpdate'));
+    }
+
+    return updatedCard;
   }
 
   async undoGrade(id: Card['id'], userId: string): Promise<{ card: Card }> {
     const card = await this.cardRepository.findById(id);
     if (!card) {
-      throw new NotFoundException('Карточка не найдена');
+      throw new NotFoundException(t('cards.notFound'));
     }
+
     // Проверяем, что пользователь является владельцем карточки
     if (card.userId != userId) {
-      throw new ForbiddenException(
-        'У вас нет прав для отмены оценки этой карточки',
-      );
+      throw new ForbiddenException(t('cards.errors.noPermission'));
     }
 
     // Найти последний лог оценки для этой карточки
     const latestReviewLog = await this.fsrsService.findLatestReviewLog(id);
     if (!latestReviewLog) {
-      throw new NotFoundException('Логи оценок для этой карточки не найдены');
+      throw new NotFoundException(t('review-logs.notFound'));
     }
 
     // Найдем все логи оценок для карточки в порядке от новых к старым
@@ -270,7 +276,9 @@ export class CardsService {
       );
       const savedCard = await this.cardRepository.update(id, initializedCard);
       if (!savedCard) {
-        throw new InternalServerErrorException('Не удалось обновить карточку');
+        throw new InternalServerErrorException(
+          t('cards.errors.failedToUpdate'),
+        );
       }
 
       // Пометить лог оценки как удаленный
@@ -300,7 +308,7 @@ export class CardsService {
 
     const savedCard = await this.cardRepository.update(id, updatedCard);
     if (!savedCard) {
-      throw new InternalServerErrorException('Не удалось обновить карточку');
+      throw new InternalServerErrorException(t('cards.errors.failedToUpdate'));
     }
 
     // Пометить лог оценки как удаленный
@@ -312,6 +320,11 @@ export class CardsService {
   }
 
   async softDelete(id: Card['id']): Promise<OperationResultDto> {
+    const card = await this.cardRepository.findById(id);
+    if (!card) {
+      throw new NotFoundException(t('cards.notFound'));
+    }
+
     await this.cardRepository.update(id, { deleted: true });
 
     // Также отмечаем содержимое карточки как удаленное
@@ -324,11 +337,16 @@ export class CardsService {
 
     return {
       success: true,
-      message: 'Card successfully deleted',
+      message: t('cards.deleted'),
     };
   }
 
   async restore(id: Card['id']): Promise<OperationResultDto> {
+    const card = await this.cardRepository.findById(id);
+    if (!card) {
+      throw new NotFoundException(t('cards.notFound'));
+    }
+
     await this.cardRepository.update(id, { deleted: false });
 
     // Также восстанавливаем содержимое карточки
@@ -341,7 +359,7 @@ export class CardsService {
 
     return {
       success: true,
-      message: 'Card successfully restored',
+      message: t('cards.restored'),
     };
   }
 

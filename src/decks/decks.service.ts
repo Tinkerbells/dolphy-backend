@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateDeckDto } from './dto/create-deck.dto';
 import { UpdateDeckDto } from './dto/update-deck.dto';
 import { DeckRepository } from './infrastructure/persistence/deck.repository';
@@ -6,24 +10,19 @@ import { IPaginationOptions } from '../utils/types/pagination-options';
 import { Deck } from './domain/deck';
 import { v4 as uuidv4 } from 'uuid';
 import { OperationResultDto } from '../utils/dto/operation-result.dto';
-import { I18nContext } from 'nestjs-i18n';
+import { t } from '../utils/i18n';
 
 @Injectable()
 export class DecksService {
   constructor(private readonly deckRepository: DeckRepository) {}
 
   async create(createDeckDto: CreateDeckDto, userId: string): Promise<Deck> {
-    const i18n = I18nContext.current();
-
-    if (!i18n) {
-      throw new Error('I18nContext is not available');
-    }
     if (createDeckDto.name.length > 100) {
-      throw new BadRequestException(i18n.t('decks.errors.nameTooLong'));
+      throw new BadRequestException(t('decks.errors.nameTooLong'));
     }
 
     if (createDeckDto.description && createDeckDto.description.length > 500) {
-      throw new BadRequestException(i18n.t('decks.errors.descriptionTooLong'));
+      throw new BadRequestException(t('decks.errors.descriptionTooLong'));
     }
 
     const newDeck = new Deck();
@@ -50,8 +49,12 @@ export class DecksService {
     return this.deckRepository.findByUserId(userId);
   }
 
-  findById(id: Deck['id']): Promise<Deck | null> {
-    return this.deckRepository.findById(id);
+  async findById(id: Deck['id']): Promise<Deck | null> {
+    const deck = await this.deckRepository.findById(id);
+    if (!deck) {
+      throw new NotFoundException(t('decks.notFound'));
+    }
+    return deck;
   }
 
   findByIds(ids: Deck['id'][]): Promise<Deck[]> {
@@ -62,6 +65,19 @@ export class DecksService {
     id: Deck['id'],
     updateDeckDto: UpdateDeckDto,
   ): Promise<Deck | null> {
+    const deck = await this.deckRepository.findById(id);
+    if (!deck) {
+      throw new NotFoundException(t('decks.notFound'));
+    }
+
+    if (updateDeckDto.name && updateDeckDto.name.length > 100) {
+      throw new BadRequestException(t('decks.errors.nameTooLong'));
+    }
+
+    if (updateDeckDto.description && updateDeckDto.description.length > 500) {
+      throw new BadRequestException(t('decks.errors.descriptionTooLong'));
+    }
+
     const updateData: Partial<Deck> = {};
 
     if (updateDeckDto.name !== undefined) {
@@ -72,18 +88,34 @@ export class DecksService {
       updateData.description = updateDeckDto.description;
     }
 
-    return this.deckRepository.update(id, updateData);
+    const updatedDeck = await this.deckRepository.update(id, updateData);
+    if (!updatedDeck) {
+      throw new BadRequestException(t('common.error'));
+    }
+
+    return updatedDeck;
   }
 
   async softDelete(id: Deck['id']): Promise<OperationResultDto> {
+    const deck = await this.deckRepository.findById(id);
+    if (!deck) {
+      throw new NotFoundException(t('decks.notFound'));
+    }
+
     await this.deckRepository.update(id, { deleted: true });
+
     return {
       success: true,
-      message: 'Deck successfully deleted',
+      message: t('decks.deleted'),
     };
   }
 
-  remove(id: Deck['id']): Promise<void> {
+  async remove(id: Deck['id']): Promise<void> {
+    const deck = await this.deckRepository.findById(id);
+    if (!deck) {
+      throw new NotFoundException(t('decks.notFound'));
+    }
+
     return this.deckRepository.remove(id);
   }
 }
