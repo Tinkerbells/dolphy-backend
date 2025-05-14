@@ -18,6 +18,7 @@ import { FileType } from '../files/domain/file';
 import { Role } from '../roles/domain/role';
 import { Status } from '../statuses/domain/status';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { t } from 'src/utils/i18n';
 
 @Injectable()
 export class UsersService {
@@ -47,7 +48,7 @@ export class UsersService {
         throw new UnprocessableEntityException({
           status: HttpStatus.UNPROCESSABLE_ENTITY,
           errors: {
-            email: 'emailAlreadyExists',
+            email: t('users.errors.emailAlreadyExists'),
           },
         });
       }
@@ -64,7 +65,7 @@ export class UsersService {
         throw new UnprocessableEntityException({
           status: HttpStatus.UNPROCESSABLE_ENTITY,
           errors: {
-            photo: 'imageNotExists',
+            photo: t('users.errors.imageNotExists'),
           },
         });
       }
@@ -83,7 +84,7 @@ export class UsersService {
         throw new UnprocessableEntityException({
           status: HttpStatus.UNPROCESSABLE_ENTITY,
           errors: {
-            role: 'roleNotExists',
+            role: t('users.errors.roleNotExists'),
           },
         });
       }
@@ -103,7 +104,7 @@ export class UsersService {
         throw new UnprocessableEntityException({
           status: HttpStatus.UNPROCESSABLE_ENTITY,
           errors: {
-            status: 'statusNotExists',
+            status: t('users.errors.statusNotExists'),
           },
         });
       }
@@ -198,7 +199,7 @@ export class UsersService {
         throw new UnprocessableEntityException({
           status: HttpStatus.UNPROCESSABLE_ENTITY,
           errors: {
-            email: 'emailAlreadyExists',
+            email: t('users.errors.emailAlreadyExists'),
           },
         });
       }
@@ -218,7 +219,7 @@ export class UsersService {
         throw new UnprocessableEntityException({
           status: HttpStatus.UNPROCESSABLE_ENTITY,
           errors: {
-            photo: 'imageNotExists',
+            photo: t('users.errors.imageNotExists'),
           },
         });
       }
@@ -237,7 +238,7 @@ export class UsersService {
         throw new UnprocessableEntityException({
           status: HttpStatus.UNPROCESSABLE_ENTITY,
           errors: {
-            role: 'roleNotExists',
+            role: t('users.errors.roleNotExists'),
           },
         });
       }
@@ -257,7 +258,7 @@ export class UsersService {
         throw new UnprocessableEntityException({
           status: HttpStatus.UNPROCESSABLE_ENTITY,
           errors: {
-            status: 'statusNotExists',
+            status: t('users.errors.statusNotExists'),
           },
         });
       }
