@@ -29,6 +29,7 @@ import { SessionService } from '../session/session.service';
 import { StatusEnum } from '../statuses/statuses.enum';
 import { User } from '../users/domain/user';
 import { t } from 'src/utils/i18n';
+import { OperationResultDto } from 'src/utils/dto/operation-result.dto';
 
 @Injectable()
 export class AuthService {
@@ -194,7 +195,7 @@ export class AuthService {
     };
   }
 
-  async register(dto: AuthRegisterLoginDto): Promise<void> {
+  async register(dto: AuthRegisterLoginDto): Promise<OperationResultDto> {
     const user = await this.usersService.create({
       ...dto,
       email: dto.email,
@@ -226,6 +227,11 @@ export class AuthService {
         hash,
       },
     });
+
+    return {
+      success: true,
+      message: t('auth.registration.success'),
+    };
   }
 
   async confirmEmail(hash: string): Promise<void> {
@@ -496,7 +502,6 @@ export class AuthService {
   async refreshToken(
     data: Pick<JwtRefreshPayloadType, 'sessionId' | 'hash'>,
   ): Promise<Omit<LoginResponseDto, 'user'>> {
-    console.log('321321');
     const session = await this.sessionService.findById(data.sessionId);
 
     if (!session) {

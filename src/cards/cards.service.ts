@@ -25,6 +25,33 @@ export class CardsService {
     private readonly fsrsService: FsrsService,
   ) {}
 
+  /**
+   * Заполняет поля front и back у карточки из связанной заметки
+   * @param card Карточка для заполнения
+   * @returns Карточка с заполненными полями front и back
+   */
+  private async populateCardContent(card: Card): Promise<Card> {
+    const note = await this.noteRepository.findByCardId(card.id);
+    if (note) {
+      card.front = note.question;
+      card.back = note.answer;
+    }
+    return card;
+  }
+
+  /**
+   * Заполняет поля front и back для массива карточек
+   * @param cards Массив карточек
+   * @returns Массив карточек с заполненными полями
+   */
+  private async populateCardsContent(cards: Card[]): Promise<Card[]> {
+    const populatedCards: Card[] = [];
+    for (const card of cards) {
+      populatedCards.push(await this.populateCardContent(card));
+    }
+    return populatedCards;
+  }
+
   async create(
     createCardDto: CreateCardDto,
     userId: string,
@@ -58,6 +85,10 @@ export class CardsService {
     const savedCard = await this.cardRepository.create(initializedCard);
     const savedCardNote = await this.noteRepository.create(cardNote);
 
+    // Заполняем поля front и back в карточке
+    savedCard.front = savedCardNote.question;
+    savedCard.back = savedCardNote.answer;
+
     return {
       card: savedCard,
       note: savedCardNote,
@@ -78,7 +109,7 @@ export class CardsService {
     return results;
   }
 
-  findAllWithPagination({
+  async findAllWithPagination({
     paginationOptions,
     userId,
     deckId,
@@ -87,15 +118,24 @@ export class CardsService {
     userId?: string;
     deckId?: string;
   }): Promise<Card[]> {
-    return this.cardRepository.findAllWithPagination({
+    const cards = await this.cardRepository.findAllWithPagination({
       paginationOptions,
       userId,
       deckId,
     });
+
+    // Заполняем поля front и back для всех карточек
+    return this.populateCardsContent(cards);
   }
 
-  findById(id: Card['id']): Promise<Card | null> {
-    return this.cardRepository.findById(id);
+  async findById(id: Card['id']): Promise<Card | null> {
+    const card = await this.cardRepository.findById(id);
+    if (!card) {
+      return null;
+    }
+
+    // Заполняем поля front и back
+    return this.populateCardContent(card);
   }
 
   async findWithContent(
@@ -111,29 +151,41 @@ export class CardsService {
       return null;
     }
 
+    // Заполняем поля front и back в карточке
+    card.front = note.question;
+    card.back = note.answer;
+
     return { card, note };
   }
 
-  findByIds(ids: Card['id'][]): Promise<Card[]> {
-    return this.cardRepository.findByIds(ids);
+  async findByIds(ids: Card['id'][]): Promise<Card[]> {
+    const cards = await this.cardRepository.findByIds(ids);
+    return this.populateCardsContent(cards);
   }
 
-  findByDeckId(deckId: string): Promise<Card[]> {
-    return this.cardRepository.findByDeckId(deckId);
+  async findByDeckId(deckId: string): Promise<Card[]> {
+    const cards = await this.cardRepository.findByDeckId(deckId);
+    return this.populateCardsContent(cards);
   }
 
   async findDueCards(userId: string): Promise<Card[]> {
     const now = new Date();
-    return this.cardRepository.findDueCards(userId, now);
+    const cards = await this.cardRepository.findDueCards(userId, now);
+    return this.populateCardsContent(cards);
   }
 
   async findDueCardsByDeckId(deckId: string): Promise<Card[]> {
     const now = new Date();
-    return this.cardRepository.findDueCardsByDeckId(deckId, now);
+    const cards = await this.cardRepository.findDueCardsByDeckId(deckId, now);
+    return this.populateCardsContent(cards);
   }
 
   async assignToDeck(cardId: string, deckId: string): Promise<Card | null> {
-    return this.cardRepository.assignToDeck(cardId, deckId);
+    const card = await this.cardRepository.assignToDeck(cardId, deckId);
+    if (!card) {
+      return null;
+    }
+    return this.populateCardContent(card);
   }
 
   async update(
@@ -179,6 +231,10 @@ export class CardsService {
       return null;
     }
 
+    // Заполняем поля front и back в карточке
+    card.front = updatedNote.question;
+    card.back = updatedNote.answer;
+
     return {
       card,
       note: updatedNote,
@@ -203,8 +259,11 @@ export class CardsService {
     // Создаем запись о проверке
     await this.fsrsService.createReviewLog(updatedCard, rating);
 
+    // Заполняем поля front и back
+    const populatedCard = await this.populateCardContent(savedCard);
+
     return {
-      card: savedCard,
+      card: populatedCard,
     };
   }
 
@@ -221,7 +280,7 @@ export class CardsService {
       throw new Error(t('cards.errors.failedToUpdate'));
     }
 
-    return updatedCard;
+    return this.populateCardContent(updatedCard);
   }
 
   async reset(id: Card['id']): Promise<Card | null> {
@@ -246,7 +305,7 @@ export class CardsService {
       throw new Error(t('cards.errors.failedToUpdate'));
     }
 
-    return updatedCard;
+    return this.populateCardContent(updatedCard);
   }
 
   async undoGrade(id: Card['id'], userId: string): Promise<{ card: Card }> {
@@ -284,8 +343,10 @@ export class CardsService {
       // Пометить лог оценки как удаленный
       await this.fsrsService.deleteReviewLog(latestReviewLog.id);
 
+      const populatedCard = await this.populateCardContent(savedCard);
+
       return {
-        card: savedCard,
+        card: populatedCard,
       };
     }
 
@@ -314,8 +375,10 @@ export class CardsService {
     // Пометить лог оценки как удаленный
     await this.fsrsService.deleteReviewLog(latestReviewLog.id);
 
+    const populatedCard = await this.populateCardContent(savedCard);
+
     return {
-      card: savedCard,
+      card: populatedCard,
     };
   }
 

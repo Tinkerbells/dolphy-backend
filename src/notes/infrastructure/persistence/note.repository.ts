@@ -20,6 +20,27 @@ export abstract class NoteRepository {
 
   abstract findByCardId(cardId: string): Promise<NullableType<Note>>;
 
+  /**
+   * Найти все заметки по ID колоды
+   * @param deckId Идентификатор колоды
+   * @returns Массив заметок, связанных с карточками указанной колоды
+   */
+  abstract findByDeckId(deckId: string): Promise<Note[]>;
+
+  /**
+   * Найти заметки по ID колоды с пагинацией
+   * @param deckId Идентификатор колоды
+   * @param paginationOptions Параметры пагинации
+   * @returns Массив заметок с учетом пагинации
+   */
+  abstract findByDeckIdWithPagination({
+    deckId,
+    paginationOptions,
+  }: {
+    deckId: string;
+    paginationOptions: IPaginationOptions;
+  }): Promise<Note[]>;
+
   abstract update(
     id: Note['id'],
     payload: DeepPartial<Note>,

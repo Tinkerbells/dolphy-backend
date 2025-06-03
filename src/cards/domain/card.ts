@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-// Импортируем перечисления из ts-fsrs
 export const states = ['New', 'Learning', 'Review', 'Relearning'] as const;
 export type StateType = (typeof states)[number];
 
@@ -91,4 +90,19 @@ export class Card {
 
   @ApiProperty()
   createdAt: Date;
+
+  // Новые поля, связанные с содержимым карточки (Note)
+  @ApiProperty({
+    type: String,
+    example: 'Как будет "привет" на японском?',
+    description: 'Передняя сторона карточки (вопрос)',
+  })
+  front?: string;
+
+  @ApiProperty({
+    type: String,
+    example: 'こんにちは (конничива)',
+    description: 'Задняя сторона карточки (ответ)',
+  })
+  back?: string;
 }

@@ -50,6 +50,34 @@ export class NotesService {
     return this.noteRepository.findByCardId(cardId);
   }
 
+  /**
+   * Получить все заметки по ID колоды
+   * @param deckId Идентификатор колоды
+   * @returns Массив заметок, связанных с карточками указанной колоды
+   */
+  findByDeckId(deckId: string): Promise<Note[]> {
+    return this.noteRepository.findByDeckId(deckId);
+  }
+
+  /**
+   * Получить заметки по ID колоды с пагинацией
+   * @param deckId Идентификатор колоды
+   * @param paginationOptions Параметры пагинации
+   * @returns Массив заметок с учетом пагинации
+   */
+  findByDeckIdWithPagination({
+    deckId,
+    paginationOptions,
+  }: {
+    deckId: string;
+    paginationOptions: IPaginationOptions;
+  }): Promise<Note[]> {
+    return this.noteRepository.findByDeckIdWithPagination({
+      deckId,
+      paginationOptions,
+    });
+  }
+
   async update(
     id: Note['id'],
     updateNoteDto: UpdateNoteDto,

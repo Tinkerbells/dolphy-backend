@@ -64,6 +64,48 @@ export class NoteRelationalRepository implements NoteRepository {
     return entity ? NoteMapper.toDomain(entity) : null;
   }
 
+  /**
+   * Найти все заметки по ID колоды
+   * Выполняет JOIN с таблицей card для получения заметок по deckId
+   */
+  async findByDeckId(deckId: string): Promise<Note[]> {
+    const entities = await this.noteRepository
+      .createQueryBuilder('note')
+      .innerJoin('card', 'card', 'card.id = note.cardId')
+      .where('card.deckId = :deckId', { deckId })
+      .andWhere('note.deleted = :deleted', { deleted: false })
+      .andWhere('card.deleted = :cardDeleted', { cardDeleted: false })
+      .orderBy('note.createdAt', 'DESC')
+      .getMany();
+
+    return entities.map((entity) => NoteMapper.toDomain(entity));
+  }
+
+  /**
+   * Найти заметки по ID колоды с пагинацией
+   * Выполняет JOIN с таблицей card для получения заметок по deckId с учетом пагинации
+   */
+  async findByDeckIdWithPagination({
+    deckId,
+    paginationOptions,
+  }: {
+    deckId: string;
+    paginationOptions: IPaginationOptions;
+  }): Promise<Note[]> {
+    const entities = await this.noteRepository
+      .createQueryBuilder('note')
+      .innerJoin('card', 'card', 'card.id = note.cardId')
+      .where('card.deckId = :deckId', { deckId })
+      .andWhere('note.deleted = :deleted', { deleted: false })
+      .andWhere('card.deleted = :cardDeleted', { cardDeleted: false })
+      .orderBy('note.createdAt', 'DESC')
+      .skip((paginationOptions.page - 1) * paginationOptions.limit)
+      .take(paginationOptions.limit)
+      .getMany();
+
+    return entities.map((entity) => NoteMapper.toDomain(entity));
+  }
+
   async update(id: Note['id'], payload: Partial<Note>): Promise<Note> {
     const entity = await this.noteRepository.findOne({
       where: { id },
