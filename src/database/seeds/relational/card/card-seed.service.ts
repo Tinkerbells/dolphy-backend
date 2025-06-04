@@ -3,7 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CardEntity } from '../../../../cards/infrastructure/persistence/relational/entities/card.entity';
 import { DeckEntity } from '../../../../decks/infrastructure/persistence/relational/entities/deck.entity';
+import { FsrsCardEntity } from '../../../../fsrs/infrastructure/persistence/relational/entities/fsrs-card.entity';
 import { v4 as uuidv4 } from 'uuid';
+import { Card } from 'src/cards/domain/card';
 
 @Injectable()
 export class CardSeedService {
@@ -12,15 +14,15 @@ export class CardSeedService {
     private cardRepository: Repository<CardEntity>,
     @InjectRepository(DeckEntity)
     private deckRepository: Repository<DeckEntity>,
+    @InjectRepository(FsrsCardEntity)
+    private fsrsCardRepository: Repository<FsrsCardEntity>,
   ) {}
 
   async run() {
-    const cardsCount = await this.cardRepository.count();
-
-    if (!cardsCount) {
+    const count = await this.cardRepository.count();
+    if (!count) {
       // Получаем все колоды
       const decks = await this.deckRepository.find();
-
       if (decks.length === 0) {
         console.log('Не найдено колод для создания карточек. Пропускаем...');
         return;
@@ -43,61 +45,225 @@ export class CardSeedService {
         (deck) => deck.name === 'География: Столицы мира',
       );
 
-      const now = new Date();
-      const tomorrow = new Date(now);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      const cards: Card[] = [];
+      const fsrsCards: FsrsCardEntity[] = [];
 
       // Карточки японского языка
       if (japaneseBasicsDeck) {
-        await this.cardRepository.save([
-          this.createCard(japaneseBasicsDeck.id, japaneseBasicsDeck.userId),
-          this.createCard(japaneseBasicsDeck.id, japaneseBasicsDeck.userId),
-          this.createCard(japaneseBasicsDeck.id, japaneseBasicsDeck.userId),
-        ]);
+        const japaneseCardData = [
+          {
+            question: 'Как сказать "привет" на японском?',
+            answer: 'こんにちは (конничива)',
+            metadata: {
+              tags: ['приветствие', 'базовые фразы'],
+              level: 'beginner',
+            },
+          },
+          {
+            question: 'Как сказать "спасибо" на японском?',
+            answer: 'ありがとうございます (аригато гозаимас)',
+            metadata: {
+              tags: ['благодарность', 'вежливость'],
+              level: 'beginner',
+            },
+          },
+          {
+            question: 'Как сказать "до свидания" на японском?',
+            answer: 'さようなら (саёнара)',
+            metadata: {
+              tags: ['прощание', 'базовые фразы'],
+              level: 'beginner',
+            },
+          },
+        ];
+
+        japaneseCardData.forEach((cardData) => {
+          const cardId = uuidv4();
+          const { card, fsrsCard } = this.createCardWithFsrs(
+            cardId,
+            cardData,
+            japaneseBasicsDeck,
+          );
+          cards.push(card);
+          fsrsCards.push(fsrsCard);
+        });
       }
 
       // Карточки математики
       if (mathDeck) {
-        await this.cardRepository.save([
-          this.createCard(mathDeck.id, mathDeck.userId),
-          this.createCard(mathDeck.id, mathDeck.userId),
-        ]);
+        const mathCardData = [
+          {
+            question: 'Чему равен sin(90°)?',
+            answer: '1',
+            metadata: {
+              tags: ['тригонометрия', 'синус'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Чему равен cos(0°)?',
+            answer: '1',
+            metadata: {
+              tags: ['тригонометрия', 'косинус'],
+              level: 'intermediate',
+            },
+          },
+        ];
+
+        mathCardData.forEach((cardData) => {
+          const cardId = uuidv4();
+          const { card, fsrsCard } = this.createCardWithFsrs(
+            cardId,
+            cardData,
+            mathDeck,
+          );
+          cards.push(card);
+          fsrsCards.push(fsrsCard);
+        });
       }
 
       // Карточки английского
       if (englishDeck) {
-        await this.cardRepository.save([
-          this.createCard(englishDeck.id, englishDeck.userId),
-          this.createCard(englishDeck.id, englishDeck.userId),
-          this.createCard(englishDeck.id, englishDeck.userId),
-        ]);
+        const englishCardData = [
+          {
+            question: 'Как переводится неправильный глагол "go"?',
+            answer: 'go - went - gone (идти, ехать)',
+            metadata: {
+              tags: ['неправильные глаголы', 'движение'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Как переводится неправильный глагол "see"?',
+            answer: 'see - saw - seen (видеть)',
+            metadata: {
+              tags: ['неправильные глаголы', 'чувства'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Как переводится неправильный глагол "take"?',
+            answer: 'take - took - taken (брать, взять)',
+            metadata: {
+              tags: ['неправильные глаголы', 'действие'],
+              level: 'intermediate',
+            },
+          },
+        ];
+
+        englishCardData.forEach((cardData) => {
+          const cardId = uuidv4();
+          const { card, fsrsCard } = this.createCardWithFsrs(
+            cardId,
+            cardData,
+            englishDeck,
+          );
+          cards.push(card);
+          fsrsCards.push(fsrsCard);
+        });
       }
 
       // Карточки JavaScript
       if (jsDeck) {
-        await this.cardRepository.save([
-          this.createCard(jsDeck.id, jsDeck.userId),
-          this.createCard(jsDeck.id, jsDeck.userId),
-        ]);
+        const jsCardData = [
+          {
+            question: 'Как объявить переменную в JavaScript?',
+            answer:
+              'let myVariable = value; или const myVariable = value; или var myVariable = value;',
+            metadata: { tags: ['переменные', 'основы'], level: 'beginner' },
+          },
+          {
+            question: 'Как создать массив в JavaScript?',
+            answer:
+              'const myArray = []; или const myArray = [1, 2, 3]; или const myArray = new Array();',
+            metadata: {
+              tags: ['массивы', 'структуры данных'],
+              level: 'beginner',
+            },
+          },
+        ];
+
+        jsCardData.forEach((cardData) => {
+          const cardId = uuidv4();
+          const { card, fsrsCard } = this.createCardWithFsrs(
+            cardId,
+            cardData,
+            jsDeck,
+          );
+          cards.push(card);
+          fsrsCards.push(fsrsCard);
+        });
       }
 
       // Карточки географии
       if (geographyDeck) {
-        await this.cardRepository.save([
-          this.createCard(geographyDeck.id, geographyDeck.userId),
-          this.createCard(geographyDeck.id, geographyDeck.userId),
-          this.createCard(geographyDeck.id, geographyDeck.userId),
-        ]);
+        const geographyCardData = [
+          {
+            question: 'Какая столица Франции?',
+            answer: 'Париж',
+            metadata: { tags: ['европа', 'столицы'], level: 'beginner' },
+          },
+          {
+            question: 'Какая столица Японии?',
+            answer: 'Токио',
+            metadata: { tags: ['азия', 'столицы'], level: 'beginner' },
+          },
+          {
+            question: 'Какая столица Бразилии?',
+            answer: 'Бразилиа',
+            metadata: {
+              tags: ['южная америка', 'столицы'],
+              level: 'intermediate',
+            },
+          },
+        ];
+
+        geographyCardData.forEach((cardData) => {
+          const cardId = uuidv4();
+          const { card, fsrsCard } = this.createCardWithFsrs(
+            cardId,
+            cardData,
+            geographyDeck,
+          );
+          cards.push(card);
+          fsrsCards.push(fsrsCard);
+        });
+      }
+
+      if (cards.length > 0) {
+        await this.cardRepository.save(cards);
+        await this.fsrsCardRepository.save(fsrsCards);
+        console.log(`Создано ${cards.length} карточек с FSRS данными`);
       }
     }
   }
 
-  private createCard(deckId: string, userId: string): CardEntity {
+  /**
+   * Создает карточку с контентом и соответствующую FSRS карточку
+   */
+  private createCardWithFsrs(
+    cardId: string,
+    cardData: { question: string; answer: string; metadata: any },
+    deck: DeckEntity,
+  ): { card: CardEntity; fsrsCard: FsrsCardEntity } {
     const now = new Date();
 
-    return this.cardRepository.create({
-      id: uuidv4(),
-      due: now,
+    // Создаем карточку с контентом
+    const card = this.cardRepository.create({
+      id: cardId,
+      question: cardData.question,
+      answer: cardData.answer,
+      source: 'manual',
+      metadata: cardData.metadata,
+      deckId: deck.id,
+      userId: deck.userId,
+      deleted: false,
+    });
+
+    // Создаем FSRS карточку с начальными параметрами
+    const fsrsCard = this.fsrsCardRepository.create({
+      cardId: cardId,
+      due: now, // Новые карточки доступны сразу
       stability: 0,
       difficulty: 0,
       elapsed_days: 0,
@@ -105,10 +271,11 @@ export class CardSeedService {
       reps: 0,
       lapses: 0,
       state: 'New',
+      last_review: undefined,
       suspended: now,
-      userId: userId,
-      deckId: deckId,
       deleted: false,
     });
+
+    return { card, fsrsCard };
   }
 }

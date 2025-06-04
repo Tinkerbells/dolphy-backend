@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { User } from 'src/users/domain/user';
 
 export class Card {
   @ApiProperty({
@@ -49,7 +50,7 @@ export class Card {
     example: 'cbcfa8b8-3a25-4adb-a9c6-e325f0d0f3ae',
     description: 'Идентификатор пользователя-владельца',
   })
-  userId: string;
+  userId: User['id'];
 
   @ApiProperty({
     type: Boolean,

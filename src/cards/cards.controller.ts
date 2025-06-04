@@ -34,11 +34,11 @@ import {
 } from '../utils/dto/infinity-pagination-response.dto';
 import { infinityPagination } from '../utils/infinity-pagination';
 import { FindAllCardsDto } from './dto/find-all-cards.dto';
-import { FsrsService } from '../fsrs/fsrs.service';
 import { GradeCardDto } from './dto/grade-card.dto';
 import { SuspendCardDto } from './dto/suspend-card.dto';
 import { OperationResultDto } from '../utils/dto/operation-result.dto';
 import { t } from '../utils/i18n';
+import { User } from 'src/users/domain/user';
 
 @ApiTags('Cards')
 @ApiBearerAuth()
@@ -48,10 +48,7 @@ import { t } from '../utils/i18n';
   version: '1',
 })
 export class CardsController {
-  constructor(
-    private readonly cardsService: CardsService,
-    private readonly fsrsService: FsrsService,
-  ) {}
+  constructor(private readonly cardsService: CardsService) {}
 
   @Post()
   @ApiOperation({ summary: 'Создать новую карточку' })
@@ -140,7 +137,11 @@ export class CardsController {
     description: 'Обновленная карточка',
   })
   @HttpCode(HttpStatus.OK)
-  grade(@Param('id') id: string, @Body() body: GradeCardDto, @Request() req) {
+  grade(
+    @Param('id') id: string,
+    @Body() body: GradeCardDto,
+    @Request() req: { user: User },
+  ) {
     // Проверяем, валидна ли оценка
     // TODO: fix this rating stuff
     // if (!ratings.includes(body.rating)) {

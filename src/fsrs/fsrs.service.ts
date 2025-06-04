@@ -10,6 +10,7 @@ import {
   RatingType,
 } from 'ts-fsrs';
 import { FsrsCardRepository } from './infrastructure/persistence/fsrs-card.repository';
+import { User } from 'src/users/domain/user';
 
 @Injectable()
 export class FsrsService {
@@ -229,7 +230,7 @@ export class FsrsService {
   /**
    * Находит все карточки готовые к повторению для пользователя
    */
-  async findDueCards(userId: string): Promise<FsrsCard[]> {
+  async findDueCards(userId: User['id']): Promise<FsrsCard[]> {
     const now = new Date();
     return this.fsrsCardRepository.findDueCards(userId, now);
   }

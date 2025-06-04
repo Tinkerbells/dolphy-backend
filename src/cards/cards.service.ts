@@ -12,6 +12,7 @@ import { FsrsService } from '../fsrs/fsrs.service';
 import { OperationResultDto } from '../utils/dto/operation-result.dto';
 import { t } from 'src/utils/i18n';
 import { RatingType } from 'ts-fsrs';
+import { User } from 'src/users/domain/user';
 
 @Injectable()
 export class CardsService {
@@ -115,7 +116,7 @@ export class CardsService {
   async grade(
     id: Card['id'],
     rating: RatingType,
-    userId: string,
+    userId: User['id'],
   ): Promise<{ card: Card }> {
     const card = await this.cardRepository.findById(id);
     if (!card) {
@@ -123,7 +124,7 @@ export class CardsService {
     }
 
     // Проверяем, что пользователь является владельцем карточки
-    if (card.userId !== userId) {
+    if (card.userId !== String(userId)) {
       throw new ForbiddenException(t('cards.errors.noPermission'));
     }
 

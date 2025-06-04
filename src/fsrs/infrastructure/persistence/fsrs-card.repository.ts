@@ -1,3 +1,4 @@
+import { User } from 'src/users/domain/user';
 import { DeepPartial } from '../../../utils/types/deep-partial.type';
 import { NullableType } from '../../../utils/types/nullable.type';
 import { IPaginationOptions } from '../../../utils/types/pagination-options';
@@ -23,7 +24,7 @@ export abstract class FsrsCardRepository {
   /**
    * Найти все карточки готовые к повторению для пользователя
    */
-  abstract findDueCards(userId: string, now: Date): Promise<FsrsCard[]>;
+  abstract findDueCards(userId: User['id'], now: Date): Promise<FsrsCard[]>;
 
   /**
    * Найти карточки готовые к повторению из конкретной колоды
