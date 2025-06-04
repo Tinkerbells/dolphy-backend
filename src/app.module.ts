@@ -48,8 +48,11 @@ import { MarketDecksModule } from './market-decks/market-decks.module';
 
 import { MarketCommentsModule } from './market-comments/market-comments.module';
 
+import { FsrsModule } from './fsrs/fsrs.module';
+
 @Module({
   imports: [
+    FsrsModule,
     MarketCommentsModule,
     MarketDecksModule,
     NotesModule,

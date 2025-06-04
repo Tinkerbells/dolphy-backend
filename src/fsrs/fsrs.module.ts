@@ -1,10 +1,18 @@
-import { Module } from '@nestjs/common';
+import {
+  // common
+  Module,
+} from '@nestjs/common';
 import { FsrsService } from './fsrs.service';
-import { RelationalReviewLogPersistenceModule } from '../review-logs/infrastructure/persistence/relational/relational-persistence.module';
+import { FsrsController } from './fsrs.controller';
+import { RelationalFsrsPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
 
 @Module({
-  imports: [RelationalReviewLogPersistenceModule],
+  imports: [
+    // import modules, etc.
+    RelationalFsrsPersistenceModule,
+  ],
+  controllers: [FsrsController],
   providers: [FsrsService],
-  exports: [FsrsService],
+  exports: [FsrsService, RelationalFsrsPersistenceModule],
 })
 export class FsrsModule {}
