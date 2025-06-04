@@ -25,7 +25,7 @@ import {
   ApiOperation,
   ApiBody,
 } from '@nestjs/swagger';
-import { FsrsCard } from './domain/fsrs-card';
+import { FsrsCard, FsrsCardWithContent } from './domain/fsrs-card';
 import { AuthGuard } from '@nestjs/passport';
 import {
   InfinityPaginationResponse,
@@ -53,7 +53,7 @@ export class FsrsController {
     description: 'Карточки, которые нужно повторить',
   })
   @HttpCode(HttpStatus.OK)
-  async findDueCards(@Request() req): Promise<FsrsCard[]> {
+  async findDueCards(@Request() req): Promise<FsrsCardWithContent[]> {
     return await this.fsrsService.findDueCards(req.user.id);
   }
 
@@ -73,7 +73,7 @@ export class FsrsController {
   @HttpCode(HttpStatus.OK)
   async findDueCardsByDeckId(
     @Param('deckId') deckId: string,
-  ): Promise<FsrsCard[]> {
+  ): Promise<FsrsCardWithContent[]> {
     return this.fsrsService.findDueCardsByDeckId(deckId);
   }
 

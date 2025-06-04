@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Card } from 'src/cards/domain/card';
 
 export const states = ['New', 'Learning', 'Review', 'Relearning'] as const;
 export type StateType = (typeof states)[number];
@@ -99,4 +100,12 @@ export class FsrsCard {
     description: 'Дата создания',
   })
   createdAt: Date;
+}
+
+export class FsrsCardWithContent extends FsrsCard {
+  @ApiProperty({
+    type: () => Card,
+    description: 'Карточка с контентом (вопрос, ответ и метаданные)',
+  })
+  card: Card;
 }

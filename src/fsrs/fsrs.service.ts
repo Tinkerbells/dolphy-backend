@@ -3,7 +3,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { FsrsCard, StateType, states } from './domain/fsrs-card';
+import {
+  FsrsCard,
+  FsrsCardWithContent,
+  StateType,
+  states,
+} from './domain/fsrs-card';
 import {
   fsrs,
   type Card as FsrsApiCard,
@@ -18,6 +23,7 @@ import { CardRepository } from '../cards/infrastructure/persistence/card.reposit
 import { User } from 'src/users/domain/user';
 import { Card } from '../cards/domain/card';
 import { t } from '../utils/i18n';
+import { DueCardResponseDto } from './dto/due-card-response.dto';
 
 @Injectable()
 export class FsrsService {
@@ -369,17 +375,50 @@ export class FsrsService {
   /**
    * Находит все карточки готовые к повторению для пользователя
    */
-  async findDueCards(userId: User['id']): Promise<FsrsCard[]> {
+  async findDueCards(userId: User['id']): Promise<FsrsCardWithContent[]> {
     const now = new Date();
-    return this.fsrsCardRepository.findDueCards(userId, now);
+
+    const fsrsCards = await this.fsrsCardRepository.findDueCards(userId, now);
+
+    const result: FsrsCardWithContent[] = [];
+
+    for (const fsrsCard of fsrsCards) {
+      const card = await this.cardRepository.findById(fsrsCard.cardId);
+      if (card) {
+        result.push({
+          ...fsrsCard,
+          card,
+        });
+      }
+    }
+
+    return result;
   }
 
   /**
    * Находит все карточки готовые к повторению из конкретной колоды
    */
-  async findDueCardsByDeckId(deckId: string): Promise<FsrsCard[]> {
+  async findDueCardsByDeckId(deckId: string): Promise<FsrsCardWithContent[]> {
     const now = new Date();
-    return this.fsrsCardRepository.findDueCardsByDeckId(deckId, now);
+
+    const fsrsCards = await this.fsrsCardRepository.findDueCardsByDeckId(
+      deckId,
+      now,
+    );
+
+    const result: FsrsCardWithContent[] = [];
+
+    for (const fsrsCard of fsrsCards) {
+      const card = await this.cardRepository.findById(fsrsCard.cardId);
+      if (card) {
+        result.push({
+          ...fsrsCard,
+          card,
+        });
+      }
+    }
+
+    return result;
   }
 
   /**
