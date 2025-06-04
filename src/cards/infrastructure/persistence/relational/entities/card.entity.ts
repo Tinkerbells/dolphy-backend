@@ -5,6 +5,7 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   JoinColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { EntityRelationalHelper } from '../../../../../utils/relational-entity-helper';
 import { DeckEntity } from '../../../../../decks/infrastructure/persistence/relational/entities/deck.entity';
@@ -16,38 +17,17 @@ export class CardEntity extends EntityRelationalHelper {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'timestamp' })
-  due: Date;
-
-  @Column({ type: 'real' })
-  stability: number;
-
-  @Column({ type: 'real' })
-  difficulty: number;
-
-  @Column({ type: 'integer' })
-  elapsed_days: number;
-
-  @Column({ type: 'integer' })
-  scheduled_days: number;
-
-  @Column({ type: 'integer' })
-  reps: number;
-
-  @Column({ type: 'integer' })
-  lapses: number;
+  @Column()
+  question: string;
 
   @Column()
-  state: string;
+  answer: string;
 
-  @Column({ type: 'timestamp', nullable: true })
-  last_review?: Date;
+  @Column({ default: 'manual' })
+  source: string;
 
-  @Column({ type: 'timestamp' })
-  suspended: Date;
-
-  @Column()
-  userId: string;
+  @Column({ type: 'json', nullable: true })
+  metadata?: Record<string, any>;
 
   @Column()
   deckId: string;
@@ -64,4 +44,7 @@ export class CardEntity extends EntityRelationalHelper {
 
   @CreateDateColumn()
   createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

@@ -7,9 +7,16 @@ export class FsrsCard {
   @ApiProperty({
     type: String,
     example: 'cbcfa8b8-3a25-4adb-a9c6-e325f0d0f3ae',
-    description: 'Уникальный идентификатор карточки',
+    description: 'Уникальный идентификатор карточки FSRS',
   })
   id: string;
+
+  @ApiProperty({
+    type: String,
+    example: 'cbcfa8b8-3a25-4adb-a9c6-e325f0d0f3ae',
+    description: 'Идентификатор связанной карточки с контентом',
+  })
+  cardId: string;
 
   @ApiProperty({
     type: Date,
@@ -79,20 +86,6 @@ export class FsrsCard {
     description: 'Дата до которой карточка приостановлена',
   })
   suspended: Date;
-
-  @ApiProperty({
-    type: String,
-    example: '1a2b3c4d-5e6f-7g8h-9i0j-1k2l3m4n5o6p',
-    description: 'Идентификатор пользователя',
-  })
-  userId: string;
-
-  @ApiProperty({
-    type: String,
-    example: 'cbcfa8b8-3a25-4adb-a9c6-e325f0d0f3ae',
-    description: 'Идентификатор колоды',
-  })
-  deckId: string;
 
   @ApiProperty({
     type: Boolean,

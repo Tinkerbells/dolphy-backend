@@ -4,16 +4,9 @@ export class Card {
   @ApiProperty({
     type: String,
     example: 'cbcfa8b8-3a25-4adb-a9c6-e325f0d0f3ae',
-    description: 'Уникальный идентификатор контента карточки',
+    description: 'Уникальный идентификатор карточки',
   })
   id: string;
-
-  @ApiProperty({
-    type: String,
-    example: 'cbcfa8b8-3a25-4adb-a9c6-e325f0d0f3ae',
-    description: 'Идентификатор связанной карточки для обучения',
-  })
-  studyCardId: string;
 
   @ApiProperty({
     type: String,
@@ -43,6 +36,13 @@ export class Card {
     required: false,
   })
   metadata?: Record<string, any>;
+
+  @ApiProperty({
+    type: String,
+    example: 'cbcfa8b8-3a25-4adb-a9c6-e325f0d0f3ae',
+    description: 'Идентификатор колоды',
+  })
+  deckId: string;
 
   @ApiProperty({
     type: Boolean,

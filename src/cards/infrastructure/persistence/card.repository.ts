@@ -4,7 +4,9 @@ import { IPaginationOptions } from '../../../utils/types/pagination-options';
 import { Card } from '../../domain/card';
 
 export abstract class CardRepository {
-  abstract create(data: Omit<Card, 'id' | 'createdAt'>): Promise<Card>;
+  abstract create(
+    data: Omit<Card, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<Card>;
 
   abstract findAllWithPagination({
     paginationOptions,
@@ -22,13 +24,7 @@ export abstract class CardRepository {
 
   abstract findByDeckId(deckId: string): Promise<Card[]>;
 
-  abstract findDueCards(userId: string, now: Date): Promise<Card[]>;
-
-  abstract findDueCardsByDeckId(deckId: string, now: Date): Promise<Card[]>;
-
-  // Новые методы для работы с колодами
-  abstract assignToDeck(cardId: string, deckId: string): Promise<Card | null>;
-  // abstract removeFromDeck(cardId: string): Promise<Card | null>;
+  abstract findByUserId(userId: string): Promise<Card[]>;
 
   abstract update(
     id: Card['id'],

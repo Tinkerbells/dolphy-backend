@@ -25,61 +25,13 @@ export class CardsService {
     private readonly fsrsService: FsrsService,
   ) {}
 
-  /**
-   * Заполняет поля front и back у карточки из связанной заметки
-   * @param card Карточка для заполнения
-   * @returns Карточка с заполненными полями front и back
-   */
-  private async populateCardContent(card: Card): Promise<Card> {
-    const note = await this.noteRepository.findByCardId(card.id);
-    if (note) {
-      card.front = note.question;
-      card.back = note.answer;
-    }
-    return card;
-  }
-
-  /**
-   * Заполняет поля front и back для массива карточек
-   * @param cards Массив карточек
-   * @returns Массив карточек с заполненными полями
-   */
-  private async populateCardsContent(cards: Card[]): Promise<Card[]> {
-    const populatedCards: Card[] = [];
-    for (const card of cards) {
-      populatedCards.push(await this.populateCardContent(card));
-    }
-    return populatedCards;
-  }
-
   async create(
     createCardDto: CreateCardDto,
-    userId: string,
   ): Promise<{ card: Card; note: Note }> {
     // Создаем карточку с начальными параметрами FSRS
     const newCard = new Card();
     newCard.id = uuidv4();
-    newCard.userId = userId;
     newCard.deckId = createCardDto.deckId;
-
-    // Инициализируем карточку с помощью FSRS
-    const now = new Date();
-    const initializedCard = this.fsrsService.initializeCard(newCard, now);
-
-    // Создаем содержимое карточки
-    const cardNote = new Note();
-    cardNote.id = uuidv4();
-    cardNote.cardId = initializedCard.id;
-    cardNote.question = createCardDto.question;
-    cardNote.answer = createCardDto.answer;
-    cardNote.deleted = false;
-
-    // Если есть метаданные, добавляем их
-    if (createCardDto.metadata) {
-      cardNote.extend = createCardDto.metadata;
-    } else {
-      cardNote.source = 'manual';
-    }
 
     // Сохраняем карточку и ее содержимое
     const savedCard = await this.cardRepository.create(initializedCard);

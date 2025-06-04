@@ -4,8 +4,8 @@ import { Repository, In } from 'typeorm';
 import { FsrsEntity } from '../entities/fsrs.entity';
 import { NullableType } from '../../../../../utils/types/nullable.type';
 import { Fsrs } from '../../../../domain/fsrs';
-import { FsrsRepository } from '../../fsrs.repository';
-import { FsrsMapper } from '../mappers/fsrs.mapper';
+import { FsrsRepository } from '../../fsrs-card.repository';
+import { FsrsMapper } from '../mappers/fsrs-card.mapper';
 import { IPaginationOptions } from '../../../../../utils/types/pagination-options';
 
 @Injectable()
