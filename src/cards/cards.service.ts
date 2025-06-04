@@ -8,7 +8,7 @@ import { CreateCardDto } from './dto/create-card.dto';
 import { UpdateCardDto } from './dto/update-card.dto';
 import { CardRepository } from './infrastructure/persistence/card.repository';
 import { IPaginationOptions } from '../utils/types/pagination-options';
-import { Card, StateType, states } from './domain/card';
+import { Card } from './domain/card';
 import { v4 as uuidv4 } from 'uuid';
 import { FsrsService } from '../fsrs/fsrs.service';
 import { RatingType } from '../review-logs/domain/review-log';
@@ -25,26 +25,11 @@ export class CardsService {
     private readonly fsrsService: FsrsService,
   ) {}
 
-  async create(
-    createCardDto: CreateCardDto,
-  ): Promise<{ card: Card; note: Note }> {
-    // Создаем карточку с начальными параметрами FSRS
-    const newCard = new Card();
-    newCard.id = uuidv4();
-    newCard.deckId = createCardDto.deckId;
-
-    // Сохраняем карточку и ее содержимое
-    const savedCard = await this.cardRepository.create(initializedCard);
-    const savedCardNote = await this.noteRepository.create(cardNote);
-
-    // Заполняем поля front и back в карточке
-    savedCard.front = savedCardNote.question;
-    savedCard.back = savedCardNote.answer;
-
-    return {
-      card: savedCard,
-      note: savedCardNote,
-    };
+  async create(createCardDto: CreateCardDto): Promise<Card> {
+    return await this.cardRepository.create({
+      ...createCardDto,
+      deleted: false,
+    });
   }
 
   async createMany(
@@ -75,9 +60,6 @@ export class CardsService {
       userId,
       deckId,
     });
-
-    // Заполняем поля front и back для всех карточек
-    return this.populateCardsContent(cards);
   }
 
   async findById(id: Card['id']): Promise<Card | null> {

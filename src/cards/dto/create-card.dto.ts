@@ -88,4 +88,13 @@ export class CreateCardDto {
   @Type(() => CardMetadataDto)
   @IsOptional()
   metadata?: CardMetadataDto;
+  @ApiProperty({
+    type: String,
+    example: 'obsidian',
+    description: 'Источник карточки',
+    enum: ['obsidian', 'manual', 'import'],
+  })
+  @IsString()
+  @IsNotEmpty()
+  source: string;
 }
