@@ -11,6 +11,7 @@ import authConfig from './auth/config/auth.config';
 import databaseConfig from './database/config/database.config';
 import fileConfig from './files/config/file.config';
 import mailConfig from './mail/config/mail.config';
+import telegramConfig from './config/telegram-config';
 
 // Модули
 import { UsersModule } from './users/users.module';
@@ -22,12 +23,18 @@ import { MailerModule } from './mailer/mailer.module';
 import { HomeModule } from './home/home.module';
 import { TelegramAuthModule } from './telegram-auth/telegram-auth.module';
 
-// Модули для карточек
+// Модули для карточек (обновленная архитектура)
 import { DecksModule } from './decks/decks.module';
 import { CardsModule } from './cards/cards.module';
-import { ReviewLogsModule } from './review-logs/review-logs.module';
 import { FsrsModule } from './fsrs/fsrs.module';
 import { SessionModule } from './session/session.module';
+
+// Модули маркетплейса
+import { MarketDecksModule } from './market-decks/market-decks.module';
+import { MarketCommentsModule } from './market-comments/market-comments.module';
+
+// Статистика
+import { StatisticsModule } from './statistics/statistics.module';
 
 // I18n
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
@@ -40,26 +47,19 @@ const infrastructureDatabaseModule = TypeOrmModule.forRootAsync({
   },
 });
 
-import { NotesModule } from './notes/notes.module';
-
-import { StatisticsModule } from './statistics/statistics.module';
-
-import { MarketDecksModule } from './market-decks/market-decks.module';
-
-import { MarketCommentsModule } from './market-comments/market-comments.module';
-
-import { FsrsModule } from './fsrs/fsrs.module';
-
 @Module({
   imports: [
-    FsrsModule,
-    MarketCommentsModule,
-    MarketDecksModule,
-    NotesModule,
     // Конфигурация
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, authConfig, appConfig, mailConfig, fileConfig],
+      load: [
+        databaseConfig,
+        authConfig,
+        appConfig,
+        mailConfig,
+        fileConfig,
+        telegramConfig,
+      ],
       envFilePath: ['.env'],
     }),
 
@@ -72,10 +72,6 @@ import { FsrsModule } from './fsrs/fsrs.module';
         fallbackLanguage: configService.getOrThrow('app.fallbackLanguage', {
           infer: true,
         }),
-        // fallbacks: {
-        //   'ru-*': 'ru',
-        //   'en-*': 'en',
-        // },
         loaderOptions: { path: path.join(__dirname, '/i18n/'), watch: true },
       }),
       resolvers: [
@@ -96,8 +92,6 @@ import { FsrsModule } from './fsrs/fsrs.module';
     }),
 
     // Основные модули
-    StatisticsModule,
-    TelegramAuthModule,
     UsersModule,
     FilesModule,
     AuthModule,
@@ -105,13 +99,20 @@ import { FsrsModule } from './fsrs/fsrs.module';
     MailModule,
     MailerModule,
     HomeModule,
+    TelegramAuthModule,
 
-    // Модули для карточек
-    DecksModule,
-    CardsModule,
-    ReviewLogsModule,
-    FsrsModule,
-    SessionModule,
+    // Модули для карточек (обновленная архитектура)
+    FsrsModule, // Алгоритм обучения
+    DecksModule, // Колоды
+    CardsModule, // Карточки с контентом
+    SessionModule, // Сессии
+
+    // Статистика
+    StatisticsModule,
+
+    // Маркетплейс
+    MarketDecksModule,
+    MarketCommentsModule,
   ],
 })
 export class AppModule {}

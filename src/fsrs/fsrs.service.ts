@@ -1,30 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { FsrsCard, StateType, states } from './domain/fsrs-card';
 import {
-  ReviewLog,
-  RatingType,
-  ratings,
-} from '../review-logs/domain/review-log';
-import {
   fsrs,
   type Card as FsrsApiCard,
   Rating,
   State,
   createEmptyCard,
   FSRS,
+  RatingType,
 } from 'ts-fsrs';
-import { v4 as uuidv4 } from 'uuid';
-import { ReviewLogRepository } from '../review-logs/infrastructure/persistence/review-log.repository';
 import { FsrsCardRepository } from './infrastructure/persistence/fsrs-card.repository';
 
 @Injectable()
 export class FsrsService {
   private readonly fsrsInstance: FSRS;
 
-  constructor(
-    private readonly fsrsCardRepository: FsrsCardRepository,
-    private readonly reviewLogRepository: ReviewLogRepository,
-  ) {
+  constructor(private readonly fsrsCardRepository: FsrsCardRepository) {
     // Инициализация с параметрами по умолчанию
     this.fsrsInstance = fsrs();
   }
@@ -32,13 +23,13 @@ export class FsrsService {
   /**
    * Инициализирует новую FSRS карточку с параметрами по умолчанию
    */
-  async initializeCard(cardId: string, now: Date): Promise<FsrsCard> {
+  async initializeCard(cardId: string): Promise<FsrsCard> {
     // Создаем пустую карточку с помощью ts-fsrs
+    const now = new Date();
     const emptyFsrsCard = createEmptyCard();
 
     // Создаем нашу доменную FsrsCard
     const fsrsCard = new FsrsCard();
-    fsrsCard.id = uuidv4();
     fsrsCard.cardId = cardId;
     fsrsCard.due = emptyFsrsCard.due;
     fsrsCard.stability = emptyFsrsCard.stability;
@@ -51,7 +42,6 @@ export class FsrsService {
     fsrsCard.last_review = emptyFsrsCard.last_review;
     fsrsCard.suspended = now;
     fsrsCard.deleted = false;
-    fsrsCard.createdAt = now;
 
     return this.fsrsCardRepository.create(fsrsCard);
   }
@@ -156,55 +146,6 @@ export class FsrsService {
   }
 
   /**
-   * Создает запись в журнале проверок на основе карточки и оценки
-   */
-  async createReviewLog(
-    cardId: string,
-    rating: RatingType,
-  ): Promise<ReviewLog> {
-    const fsrsCard = await this.fsrsCardRepository.findByCardId(cardId);
-    if (!fsrsCard) {
-      throw new Error('FsrsCard not found');
-    }
-
-    // Считаем разницу между текущим просмотром и предыдущим
-    let lastElapsedDays = 0;
-    let lastReviewLog: ReviewLog | null = null;
-
-    try {
-      lastReviewLog = await this.reviewLogRepository.findLatestByCardId(cardId);
-    } catch (error) {
-      console.error('Error fetching last review log', error);
-    }
-
-    if (lastReviewLog) {
-      // Если есть предыдущий лог, вычисляем дни между просмотрами
-      const now = new Date();
-      const lastReviewDate = lastReviewLog.review;
-      const diffTime = Math.abs(now.getTime() - lastReviewDate.getTime());
-      lastElapsedDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    }
-
-    // Создаем новую запись в журнале
-    const reviewLog = new ReviewLog();
-    reviewLog.id = uuidv4();
-    reviewLog.cardId = cardId;
-    reviewLog.grade = rating;
-    reviewLog.state = fsrsCard.state;
-    reviewLog.due = fsrsCard.due;
-    reviewLog.stability = fsrsCard.stability;
-    reviewLog.difficulty = fsrsCard.difficulty;
-    reviewLog.elapsed_days = fsrsCard.elapsed_days;
-    reviewLog.last_elapsed_days = lastElapsedDays;
-    reviewLog.scheduled_days = fsrsCard.scheduled_days;
-    reviewLog.review = new Date();
-    reviewLog.duration = 0; // Можно добавить учет длительности повторения
-    reviewLog.deleted = false;
-
-    return this.reviewLogRepository.create(reviewLog);
-  }
-
-  /**
    * Возвращает вероятность запоминания карточки на текущий момент
    */
   async getRetentionProbability(cardId: string): Promise<number> {
@@ -264,8 +205,10 @@ export class FsrsService {
 
     // Пропускаем Rating.Manual, начинаем с Rating.Again (1)
     for (let i = Rating.Again; i <= Rating.Easy; i++) {
-      const rating = ratings[i] as RatingType;
-      const previewResult = preview[i]; // i соответствует enum Rating в ts-fsrs
+      const rating = ['Manual', 'Again', 'Hard', 'Good', 'Easy'][
+        i
+      ] as RatingType;
+      const previewResult = preview[i];
 
       const due = previewResult.card.due;
       const currentDate = new Date();
@@ -284,18 +227,26 @@ export class FsrsService {
   }
 
   /**
-   * Находит FSRS карточку по ID обычной карточки
+   * Находит все карточки готовые к повторению для пользователя
    */
-  async findByCardId(cardId: string): Promise<FsrsCard | null> {
-    return this.fsrsCardRepository.findByCardId(cardId);
+  async findDueCards(userId: string): Promise<FsrsCard[]> {
+    const now = new Date();
+    return this.fsrsCardRepository.findDueCards(userId, now);
   }
 
   /**
-   * Находит все карточки, готовые к повторению для конкретной колоды
+   * Находит все карточки готовые к повторению из конкретной колоды
    */
   async findDueCardsByDeckId(deckId: string): Promise<FsrsCard[]> {
     const now = new Date();
     return this.fsrsCardRepository.findDueCardsByDeckId(deckId, now);
+  }
+
+  /**
+   * Находит FSRS карточку по ID обычной карточки
+   */
+  async findByCardId(cardId: string): Promise<FsrsCard | null> {
+    return this.fsrsCardRepository.findByCardId(cardId);
   }
 
   /**
@@ -356,42 +307,31 @@ export class FsrsService {
 
   /**
    * Отменяет последнюю оценку карточки
+   * Упрощенная версия - просто сбрасывает на одно повторение назад
    */
   async undoLastRating(cardId: string): Promise<FsrsCard> {
-    // Найти последний лог оценки для этой карточки
-    const latestReviewLog =
-      await this.reviewLogRepository.findLatestByCardId(cardId);
-    if (!latestReviewLog) {
-      throw new Error('No review log found');
-    }
-
-    // Найдем все логи оценок для карточки в порядке от новых к старым
-    const allLogs = await this.reviewLogRepository.findByCardId(cardId);
-    if (allLogs.length <= 1) {
-      // Если это была первая оценка карточки, возвращаем её к начальному состоянию
-      return this.resetCard(cardId);
-    }
-
-    // Сортируем логи по времени оценки (от новых к старым)
-    allLogs.sort((a, b) => b.review.getTime() - a.review.getTime());
-
-    // Берем второй лог (первый - это текущий, который мы отменяем)
-    const previousLog = allLogs[1];
-
     const fsrsCard = await this.fsrsCardRepository.findByCardId(cardId);
     if (!fsrsCard) {
       throw new Error('FsrsCard not found');
     }
 
-    // Восстанавливаем состояние карточки из предыдущего лога
-    fsrsCard.state = previousLog.state as StateType;
-    fsrsCard.due = previousLog.due;
-    fsrsCard.stability = previousLog.stability;
-    fsrsCard.difficulty = previousLog.difficulty;
-    fsrsCard.elapsed_days = previousLog.elapsed_days;
-    fsrsCard.scheduled_days = previousLog.scheduled_days;
-    fsrsCard.reps = fsrsCard.reps > 0 ? fsrsCard.reps - 1 : 0;
-    fsrsCard.last_review = previousLog.review;
+    // Упрощенная логика отмены: уменьшаем reps и возвращаем к предыдущему состоянию
+    if (fsrsCard.reps > 0) {
+      fsrsCard.reps = Math.max(0, fsrsCard.reps - 1);
+
+      // Если reps стало 0, возвращаем к состоянию New
+      if (fsrsCard.reps === 0) {
+        const emptyCard = createEmptyCard();
+        fsrsCard.state = states[emptyCard.state];
+        fsrsCard.due = emptyCard.due;
+        fsrsCard.stability = emptyCard.stability;
+        fsrsCard.difficulty = emptyCard.difficulty;
+        fsrsCard.elapsed_days = emptyCard.elapsed_days;
+        fsrsCard.scheduled_days = emptyCard.scheduled_days;
+        fsrsCard.lapses = emptyCard.lapses;
+        fsrsCard.last_review = undefined;
+      }
+    }
 
     const updatedCard = await this.fsrsCardRepository.update(
       fsrsCard.id,
@@ -401,29 +341,55 @@ export class FsrsService {
       throw new Error('Failed to update FsrsCard');
     }
 
-    // Пометить лог оценки как удаленный
-    await this.reviewLogRepository.update(latestReviewLog.id, {
-      deleted: true,
-    });
-
     return updatedCard;
   }
 
-  async findLatestReviewLog(cardId: string): Promise<ReviewLog | null> {
-    return this.reviewLogRepository.findLatestByCardId(cardId);
+  // Методы для совместимости с контроллером
+
+  /**
+   * Найти все FSRS карточки с пагинацией
+   */
+  async findAllWithPagination({
+    paginationOptions,
+    deckId,
+  }: {
+    paginationOptions: { page: number; limit: number };
+    deckId?: string;
+  }): Promise<FsrsCard[]> {
+    return this.fsrsCardRepository.findAllWithPagination({
+      paginationOptions,
+      deckId,
+    });
   }
 
   /**
-   * Находит все логи оценок для указанной карточки
+   * Найти FSRS карточку по ID
    */
-  async findReviewLogsByCardId(cardId: string): Promise<ReviewLog[]> {
-    return this.reviewLogRepository.findByCardId(cardId);
+  async findById(id: string): Promise<FsrsCard | null> {
+    return this.fsrsCardRepository.findById(id);
   }
 
   /**
-   * Помечает лог оценки как удаленный
+   * Обновить FSRS карточку
    */
-  async deleteReviewLog(reviewLogId: string): Promise<void> {
-    await this.reviewLogRepository.update(reviewLogId, { deleted: true });
+  async update(
+    id: string,
+    updateData: Partial<FsrsCard>,
+  ): Promise<FsrsCard | null> {
+    return this.fsrsCardRepository.update(id, updateData);
+  }
+
+  /**
+   * Удалить FSRS карточку
+   */
+  async remove(id: string): Promise<void> {
+    return this.fsrsCardRepository.remove(id);
+  }
+
+  /**
+   * Создать FSRS карточку (для API совместимости)
+   */
+  create(): Promise<FsrsCard> {
+    throw new Error('Use initializeCard method instead');
   }
 }

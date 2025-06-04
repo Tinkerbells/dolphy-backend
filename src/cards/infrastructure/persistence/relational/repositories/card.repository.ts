@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, LessThanOrEqual } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { CardEntity } from '../entities/card.entity';
 import { NullableType } from '../../../../../utils/types/nullable.type';
 import { Card } from '../../../../domain/card';
@@ -82,55 +82,16 @@ export class CardRelationalRepository implements CardRepository {
     return entities.map((entity) => CardMapper.toDomain(entity));
   }
 
-  async findDueCards(userId: string, now: Date): Promise<Card[]> {
+  async findByUserId(userId: string): Promise<Card[]> {
     const entities = await this.cardRepository.find({
       where: {
         userId,
-        due: LessThanOrEqual(now),
-        suspended: LessThanOrEqual(now),
         deleted: false,
-      },
-      order: {
-        due: 'ASC',
       },
     });
 
     return entities.map((entity) => CardMapper.toDomain(entity));
   }
-
-  async findDueCardsByDeckId(deckId: string, now: Date): Promise<Card[]> {
-    const entities = await this.cardRepository.find({
-      where: {
-        deckId,
-        due: LessThanOrEqual(now),
-        suspended: LessThanOrEqual(now),
-        deleted: false,
-      },
-      order: {
-        due: 'ASC',
-      },
-    });
-
-    return entities.map((entity) => CardMapper.toDomain(entity));
-  }
-
-  async assignToDeck(cardId: string, deckId: string): Promise<Card | null> {
-    const card = await this.findById(cardId);
-    if (!card) {
-      return null;
-    }
-
-    return this.update(cardId, { deckId });
-  }
-
-  // async removeFromDeck(cardId: string): Promise<Card | null> {
-  //   const card = await this.findById(cardId);
-  //   if (!card) {
-  //     return null;
-  //   }
-  //
-  //   return this.update(cardId);
-  // }
 
   async update(id: Card['id'], payload: Partial<Card>): Promise<Card> {
     const entity = await this.cardRepository.findOne({

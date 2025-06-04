@@ -32,6 +32,9 @@ export class CardEntity extends EntityRelationalHelper {
   @Column()
   deckId: string;
 
+  @Column()
+  userId: string;
+
   // Связь ManyToOne с колодой
   @ManyToOne(() => DeckEntity, (deck) => deck.id, {
     onDelete: 'CASCADE',

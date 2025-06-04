@@ -1,6 +1,6 @@
-import { Note } from 'src/notes/domain/note';
+import { RatingType } from 'ts-fsrs';
 import { Card } from '../cards/domain/card';
-import { RatingType } from '../review-logs/domain/review-log';
+import { FsrsCard } from '../fsrs/domain/fsrs-card';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -10,45 +10,34 @@ export function newCardWithContent(
   userId: string,
   question: string,
   answer: string,
+  deckId: string,
+  source: string = 'manual',
   metadata?: any,
-): { card: Card; note: Note } {
+): Card {
   const cardId = uuidv4();
   const now = new Date();
 
-  // Создаем новую карточку
+  // Создаем новую карточку с контентом
   const card = new Card();
   card.id = cardId;
+  card.question = question;
+  card.answer = answer;
+  card.source = source;
+  card.metadata = metadata || null;
+  card.deckId = deckId;
   card.userId = userId;
-  card.due = now;
-  card.stability = 0;
-  card.difficulty = 0;
-  card.elapsed_days = 0;
-  card.scheduled_days = 0;
-  card.reps = 0;
-  card.lapses = 0;
-  card.state = 'New';
-  card.suspended = now;
   card.deleted = false;
   card.createdAt = now;
+  card.updatedAt = now;
 
-  // Создаем содержимое карточки
-  const note = new Note();
-  note.id = uuidv4();
-  note.cardId = cardId;
-  note.question = question;
-  note.answer = answer;
-  note.extend = metadata || null;
-  note.deleted = false;
-  note.createdAt = now;
-
-  return { card, note };
+  return card;
 }
 
 /**
- * Создает запись в журнале проверок на основе карточки
+ * Создает запись в журнале проверок на основе FSRS карточки
  */
-export function cardToReviewLog(
-  card: Card,
+export function fsrsCardToReviewLog(
+  fsrsCard: FsrsCard,
   rating: RatingType,
 ): {
   id: string;
@@ -70,44 +59,19 @@ export function cardToReviewLog(
 
   return {
     id: uuidv4(),
-    cardId: card.id,
+    cardId: fsrsCard.cardId,
     grade: rating,
-    state: card.state,
-    due: card.due,
-    stability: card.stability,
-    difficulty: card.difficulty,
-    elapsed_days: card.elapsed_days,
+    state: fsrsCard.state,
+    due: fsrsCard.due,
+    stability: fsrsCard.stability,
+    difficulty: fsrsCard.difficulty,
+    elapsed_days: fsrsCard.elapsed_days,
     last_elapsed_days: 0, // Требуется вычислить на основе предыдущих логов
-    scheduled_days: card.scheduled_days,
+    scheduled_days: fsrsCard.scheduled_days,
     review: now,
     duration: 0,
     deleted: false,
     createdAt: now,
-  };
-}
-
-/**
- * Применяет оценку к карточке и возвращает обновленную карточку и лог
- */
-export function gradeCard(
-  card: Card,
-  rating: RatingType,
-): {
-  nextCard: Card;
-  reviewLog: ReturnType<typeof cardToReviewLog>;
-} {
-  // Здесь должен быть код для применения алгоритма FSRS
-  // Но для упрощения просто создаем копию карточки и лог
-  // Реальная логика будет в FsrsService
-
-  const nextCard = { ...card };
-
-  // Создаем лог
-  const reviewLog = cardToReviewLog(card, rating);
-
-  return {
-    nextCard,
-    reviewLog,
   };
 }
 
@@ -137,11 +101,11 @@ export function formatInterval(intervalDays: number): string {
 }
 
 /**
- * Получение статистики карточки
+ * Получение статистики FSRS карточки
  */
-export function getCardStats(
-  card: Card,
-  reviewLogs: ReturnType<typeof cardToReviewLog>[],
+export function getFsrsCardStats(
+  fsrsCard: FsrsCard,
+  reviewLogs: ReturnType<typeof fsrsCardToReviewLog>[],
 ): {
   totalReviews: number;
   successRate: number;
@@ -169,7 +133,7 @@ export function getCardStats(
       : 0;
 
   // Дни с момента создания
-  const daysSinceCreation = calculateIntervalDays(card.createdAt, now);
+  const daysSinceCreation = calculateIntervalDays(fsrsCard.createdAt, now);
 
   return {
     totalReviews,
@@ -177,4 +141,48 @@ export function getCardStats(
     averageInterval,
     daysSinceCreation,
   };
+}
+
+/**
+ * Проверяет, готова ли карточка к повторению
+ */
+export function isCardDue(fsrsCard: FsrsCard, now: Date = new Date()): boolean {
+  return fsrsCard.due <= now && fsrsCard.suspended <= now;
+}
+
+/**
+ * Получает следующее время показа карточки
+ */
+export function getNextReviewTime(fsrsCard: FsrsCard): Date {
+  return new Date(
+    Math.max(fsrsCard.due.getTime(), fsrsCard.suspended.getTime()),
+  );
+}
+
+/**
+ * Форматирует состояние карточки для отображения
+ */
+export function formatCardState(state: string): string {
+  const stateTranslations = {
+    New: 'Новая',
+    Learning: 'Изучается',
+    Review: 'Повторение',
+    Relearning: 'Переизучение',
+  };
+
+  return stateTranslations[state] || state;
+}
+
+/**
+ * Определяет цвет для состояния карточки
+ */
+export function getStateColor(state: string): string {
+  const stateColors = {
+    New: '#3b82f6', // blue
+    Learning: '#f59e0b', // amber
+    Review: '#10b981', // emerald
+    Relearning: '#ef4444', // red
+  };
+
+  return stateColors[state] || '#6b7280'; // gray
 }

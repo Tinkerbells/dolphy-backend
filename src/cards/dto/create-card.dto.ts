@@ -29,16 +29,6 @@ export class CardMetadataDto {
   @IsOptional()
   filename?: string;
 
-  @ApiProperty({
-    type: String,
-    example: 'obsidian',
-    description: 'Источник карточки',
-    enum: ['obsidian', 'manual', 'import'],
-  })
-  @IsString()
-  @IsNotEmpty()
-  source: string;
-
   @ApiPropertyOptional({
     type: String,
     example: '12345abcde',
@@ -72,14 +62,15 @@ export class CreateCardDto {
   })
   answer: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     type: String,
-    example: 'cbcfa8b8-3a25-4adb-a9c6-e325f0d0f3ae',
-    description: 'Идентификатор колоды, к которой относится карточка',
+    example: 'manual',
+    description: 'Источник карточки',
+    enum: ['manual', 'obsidian', 'import'],
   })
   @IsString()
-  @IsUUID('4')
-  deckId: string;
+  @IsNotEmpty()
+  source: string;
 
   @ApiPropertyOptional({
     type: CardMetadataDto,
@@ -88,13 +79,14 @@ export class CreateCardDto {
   @Type(() => CardMetadataDto)
   @IsOptional()
   metadata?: CardMetadataDto;
+
   @ApiProperty({
     type: String,
-    example: 'obsidian',
-    description: 'Источник карточки',
-    enum: ['obsidian', 'manual', 'import'],
+    example: 'cbcfa8b8-3a25-4adb-a9c6-e325f0d0f3ae',
+    description: 'Идентификатор колоды, к которой относится карточка',
   })
   @IsString()
+  @IsUUID('4')
   @IsNotEmpty()
-  source: string;
+  deckId: string;
 }

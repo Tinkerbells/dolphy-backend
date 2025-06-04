@@ -3,10 +3,9 @@ import { CardsService } from './cards.service';
 import { CardsController } from './cards.controller';
 import { RelationalCardPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
 import { FsrsModule } from '../fsrs/fsrs.module';
-import { NotesModule } from 'src/notes/notes.module';
 
 @Module({
-  imports: [RelationalCardPersistenceModule, FsrsModule, NotesModule],
+  imports: [RelationalCardPersistenceModule, FsrsModule],
   controllers: [CardsController],
   providers: [CardsService],
   exports: [CardsService, RelationalCardPersistenceModule],

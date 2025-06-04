@@ -152,6 +152,7 @@ export class MarketDecksService {
     if (!marketDeck) {
       throw new NotFoundException(t('market-decks.notFound'));
     }
+
     // Получаем оригинальную колоду
     const originalDeck = await this.decksService.findById(marketDeck.deckId);
     if (!originalDeck) {
@@ -172,23 +173,18 @@ export class MarketDecksService {
     // Копируем карточки из оригинальной колоды
     const originalCards = await this.cardsService.findByDeckId(originalDeck.id);
 
-    // Получаем содержимое каждой карточки и создаем копию
+    // Создаем копии карточек с их контентом
     for (const card of originalCards) {
-      const cardWithContent = await this.cardsService.findWithContent(card.id);
-      if (cardWithContent && cardWithContent.note) {
-        await this.cardsService.create(
-          {
-            question: cardWithContent.note.question,
-            answer: cardWithContent.note.answer,
-            deckId: copiedDeck.id,
-            // TODO write typing or just Record
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            metadata: cardWithContent.note.extend,
-          },
-          userId,
-        );
-      }
+      await this.cardsService.create(
+        {
+          question: card.question,
+          answer: card.answer,
+          source: card.source,
+          metadata: card.metadata,
+          deckId: copiedDeck.id,
+        },
+        userId,
+      );
     }
 
     // Увеличиваем счетчик скачиваний

@@ -10,6 +10,7 @@ export class CardMapper {
     domainEntity.source = raw.source;
     domainEntity.metadata = raw.metadata;
     domainEntity.deckId = raw.deckId;
+    domainEntity.userId = raw.userId;
     domainEntity.deleted = raw.deleted;
     domainEntity.createdAt = raw.createdAt;
     domainEntity.updatedAt = raw.updatedAt;
@@ -27,6 +28,7 @@ export class CardMapper {
     persistenceEntity.source = domainEntity.source;
     persistenceEntity.metadata = domainEntity.metadata;
     persistenceEntity.deckId = domainEntity.deckId;
+    persistenceEntity.userId = domainEntity.userId;
     persistenceEntity.deleted = domainEntity.deleted;
     persistenceEntity.createdAt = domainEntity.createdAt;
     persistenceEntity.updatedAt = domainEntity.updatedAt;

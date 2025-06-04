@@ -3,10 +3,10 @@ import { StatisticsController } from './statistics.controller';
 import { StatisticsService } from './statistics.service';
 import { DecksModule } from '../decks/decks.module';
 import { CardsModule } from '../cards/cards.module';
-import { ReviewLogsModule } from '../review-logs/review-logs.module';
+import { FsrsModule } from '../fsrs/fsrs.module';
 
 @Module({
-  imports: [DecksModule, CardsModule, ReviewLogsModule],
+  imports: [DecksModule, CardsModule, FsrsModule],
   controllers: [StatisticsController],
   providers: [StatisticsService],
   exports: [StatisticsService],

@@ -34,7 +34,6 @@ import {
 } from '../utils/dto/infinity-pagination-response.dto';
 import { infinityPagination } from '../utils/infinity-pagination';
 import { FindAllCardsDto } from './dto/find-all-cards.dto';
-import { ratings } from '../review-logs/domain/review-log';
 import { FsrsService } from '../fsrs/fsrs.service';
 import { GradeCardDto } from './dto/grade-card.dto';
 import { SuspendCardDto } from './dto/suspend-card.dto';
@@ -106,17 +105,6 @@ export class CardsController {
     return infinityPagination(cards, { page, limit });
   }
 
-  @Get('due')
-  @ApiOperation({ summary: 'Получить карточки для повторения' })
-  @ApiOkResponse({
-    type: [Card],
-    description: 'Карточки, которые нужно повторить',
-  })
-  @HttpCode(HttpStatus.OK)
-  async findDue(@Request() req) {
-    return this.cardsService.findDueCards(req.user.id);
-  }
-
   @Get(':id')
   @ApiOperation({ summary: 'Получить карточку по ID' })
   @ApiParam({
@@ -131,32 +119,11 @@ export class CardsController {
   })
   @HttpCode(HttpStatus.OK)
   async findOne(@Param('id') id: string) {
-    const cardWithContent = await this.cardsService.findWithContent(id);
-    if (!cardWithContent) {
-      throw new BadRequestException(t('cards.notFound'));
-    }
-    return cardWithContent;
-  }
-
-  @Get(':id/preview')
-  @ApiOperation({ summary: 'Предпросмотр оценок для карточки' })
-  @ApiParam({
-    name: 'id',
-    type: String,
-    required: true,
-    description: 'Уникальный идентификатор карточки',
-  })
-  @ApiOkResponse({
-    description: 'Предполагаемые даты следующего повторения для каждой оценки',
-  })
-  @HttpCode(HttpStatus.OK)
-  async preview(@Param('id') id: string) {
     const card = await this.cardsService.findById(id);
     if (!card) {
       throw new BadRequestException(t('cards.notFound'));
     }
-
-    return this.fsrsService.previewRatings(card);
+    return card;
   }
 
   @Post(':id/grade')
@@ -173,13 +140,14 @@ export class CardsController {
     description: 'Обновленная карточка',
   })
   @HttpCode(HttpStatus.OK)
-  grade(@Param('id') id: string, @Body() body: GradeCardDto) {
+  grade(@Param('id') id: string, @Body() body: GradeCardDto, @Request() req) {
     // Проверяем, валидна ли оценка
-    if (!ratings.includes(body.rating)) {
-      throw new BadRequestException(t('cards.errors.invalidRating'));
-    }
+    // TODO: fix this rating stuff
+    // if (!ratings.includes(body.rating)) {
+    //   throw new BadRequestException(t('cards.errors.invalidRating'));
+    // }
 
-    return this.cardsService.grade(id, body.rating);
+    return this.cardsService.grade(id, body.rating, req.user.id);
   }
 
   @Patch(':id')
@@ -217,8 +185,8 @@ export class CardsController {
     description: 'Карточка со сброшенным состоянием',
   })
   @HttpCode(HttpStatus.OK)
-  async reset(@Param('id') id: string) {
-    const resetCard = await this.cardsService.reset(id);
+  async reset(@Param('id') id: string, @Request() req) {
+    const resetCard = await this.cardsService.reset(id, req.user.id);
     if (!resetCard) {
       throw new BadRequestException(t('cards.notFound'));
     }
@@ -259,8 +227,16 @@ export class CardsController {
     description: 'Карточка с обновленным статусом приостановки',
   })
   @HttpCode(HttpStatus.OK)
-  async suspend(@Param('id') id: string, @Body() body: SuspendCardDto) {
-    const suspendedCard = await this.cardsService.suspend(id, body.until);
+  async suspend(
+    @Param('id') id: string,
+    @Body() body: SuspendCardDto,
+    @Request() req,
+  ) {
+    const suspendedCard = await this.cardsService.suspend(
+      id,
+      body.until,
+      req.user.id,
+    );
     if (!suspendedCard) {
       throw new BadRequestException(t('cards.notFound'));
     }
@@ -283,8 +259,8 @@ export class CardsController {
     description: 'Card successfully deleted',
   })
   @HttpCode(HttpStatus.OK)
-  remove(@Param('id') id: string) {
-    return this.cardsService.softDelete(id);
+  remove(@Param('id') id: string, @Request() req) {
+    return this.cardsService.softDelete(id, req.user.id);
   }
 
   @Post(':id/restore')
@@ -300,29 +276,11 @@ export class CardsController {
     description: 'Card successfully restored',
   })
   @HttpCode(HttpStatus.OK)
-  restore(@Param('id') id: string) {
-    return this.cardsService.restore(id);
+  restore(@Param('id') id: string, @Request() req) {
+    return this.cardsService.restore(id, req.user.id);
   }
 
   @Get('deck/:deckId')
-  @ApiOperation({
-    summary: 'Получить карточки для повторения из конкретной колоды',
-  })
-  @ApiParam({
-    name: 'deckId',
-    description: 'ID колоды',
-    type: String,
-  })
-  @ApiOkResponse({
-    type: [Card],
-    description: 'Карточки, которые нужно повторить из указанной колоды',
-  })
-  @HttpCode(HttpStatus.OK)
-  async findByDeckId(@Param('deckId') deckId: string) {
-    return this.cardsService.findByDeckId(deckId);
-  }
-
-  @Get('due/deck/:deckId')
   @ApiOperation({
     summary: 'Получить карточки из конкретной колоды',
   })
@@ -336,7 +294,7 @@ export class CardsController {
     description: 'Карточки из указанной колоды',
   })
   @HttpCode(HttpStatus.OK)
-  async findDueByDeckId(@Param('deckId') deckId: string) {
-    return this.cardsService.findDueCardsByDeckId(deckId);
+  async findByDeckId(@Param('deckId') deckId: string) {
+    return this.cardsService.findByDeckId(deckId);
   }
 }

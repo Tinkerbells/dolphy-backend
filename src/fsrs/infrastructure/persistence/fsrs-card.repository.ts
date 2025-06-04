@@ -20,8 +20,14 @@ export abstract class FsrsCardRepository {
 
   abstract findByCardIds(cardIds: string[]): Promise<FsrsCard[]>;
 
-  abstract findDueCards(now: Date): Promise<FsrsCard[]>;
+  /**
+   * Найти все карточки готовые к повторению для пользователя
+   */
+  abstract findDueCards(userId: string, now: Date): Promise<FsrsCard[]>;
 
+  /**
+   * Найти карточки готовые к повторению из конкретной колоды
+   */
   abstract findDueCardsByDeckId(deckId: string, now: Date): Promise<FsrsCard[]>;
 
   abstract update(

@@ -1,18 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { DeckRepository } from '../decks/infrastructure/persistence/deck.repository';
 import { CardRepository } from '../cards/infrastructure/persistence/card.repository';
-import { ReviewLogRepository } from '../review-logs/infrastructure/persistence/review-log.repository';
+import { FsrsService } from '../fsrs/fsrs.service';
+import { FsrsCardRepository } from '../fsrs/infrastructure/persistence/fsrs-card.repository';
 import { DeckStatisticsDto } from './dto/deck-statistics.dto';
 import { UserStatisticsDto } from './dto/user-statistics.dto';
-import { ReviewLog } from 'src/review-logs/domain/review-log';
-import { Card } from 'src/cards/domain/card';
 
 @Injectable()
 export class StatisticsService {
   constructor(
     private readonly deckRepository: DeckRepository,
     private readonly cardRepository: CardRepository,
-    private readonly reviewLogRepository: ReviewLogRepository,
+    private readonly fsrsService: FsrsService,
+    private readonly fsrsCardRepository: FsrsCardRepository,
   ) {}
 
   /**
@@ -26,64 +26,50 @@ export class StatisticsService {
       return this.getEmptyDeckStatistics();
     }
 
-    // Получаем карточки, которые нужно повторить сегодня
-    const now = new Date();
-    const dueCards = await this.cardRepository.findDueCardsByDeckId(
-      deckId,
-      now,
-    );
+    // Получаем карточки, которые нужно повторить сегодня через FSRS
+    const dueCards = await this.fsrsService.findDueCardsByDeckId(deckId);
 
-    // Получаем логи повторений для всех карточек в колоде
+    // Получаем FSRS карточки для всех карточек в колоде
     const cardIds = cards.map((card) => card.id);
-    const reviewLogs: ReviewLog[] = [];
-
-    for (const cardId of cardIds) {
-      const logs = await this.reviewLogRepository.findByCardId(cardId);
-      reviewLogs.push(...logs);
-    }
+    const fsrsCards = await this.fsrsCardRepository.findByCardIds(cardIds);
 
     // Неделю назад для определения недавней активности
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
     // Подсчет карточек по состояниям
-    const newCards = cards.filter((card) => card.state === 'New').length;
-    const learningCards = cards.filter(
-      (card) => card.state === 'Learning',
+    const newCards = fsrsCards.filter(
+      (fsrsCard) => fsrsCard.state === 'New',
     ).length;
-    const reviewCards = cards.filter((card) => card.state === 'Review').length;
-    const relearningCards = cards.filter(
-      (card) => card.state === 'Relearning',
+    const learningCards = fsrsCards.filter(
+      (fsrsCard) => fsrsCard.state === 'Learning',
     ).length;
-
-    // Подсчет недавно изученных карточек
-    const recentReviewLogs = reviewLogs.filter(
-      (log) => new Date(log.review) >= oneWeekAgo,
-    );
-
-    const uniqueCardIds = new Set();
-    recentReviewLogs.forEach((log) => uniqueCardIds.add(log.cardId));
-    const learnedLastWeek = uniqueCardIds.size;
-
-    // Расчет процента успешных ответов
-    const successfulReviews = reviewLogs.filter(
-      (log) => log.grade === 'Good' || log.grade === 'Easy',
+    const reviewCards = fsrsCards.filter(
+      (fsrsCard) => fsrsCard.state === 'Review',
+    ).length;
+    const relearningCards = fsrsCards.filter(
+      (fsrsCard) => fsrsCard.state === 'Relearning',
     ).length;
 
+    // Подсчет карточек, изученных за последнюю неделю
+    // (карточки, которые имеют last_review в пределах недели)
+    const learnedLastWeek = fsrsCards.filter(
+      (fsrsCard) =>
+        fsrsCard.last_review && new Date(fsrsCard.last_review) >= oneWeekAgo,
+    ).length;
+
+    // Расчет успешности на основе соотношения reps к lapses
+    const totalReps = fsrsCards.reduce((sum, card) => sum + card.reps, 0);
+    const totalLapses = fsrsCards.reduce((sum, card) => sum + card.lapses, 0);
     const successRate =
-      reviewLogs.length > 0 ? (successfulReviews / reviewLogs.length) * 100 : 0;
-
-    // Расчет среднего времени повторения
-    const totalDuration = reviewLogs.reduce(
-      (sum, log) => sum + log.duration,
-      0,
-    );
-    const averageReviewTime =
-      reviewLogs.length > 0
-        ? totalDuration / reviewLogs.length / 1000 // Конвертируем в секунды
+      totalReps > 0
+        ? Math.round(((totalReps - totalLapses) / totalReps) * 100)
         : 0;
 
-    // Активность по дням
+    // Среднее время повторения - заглушка, так как нет данных о времени
+    const averageReviewTime = 0;
+
+    // Активность по дням на основе last_review
     const activityByDay = {};
 
     // Инициализируем последние 7 дней
@@ -94,13 +80,15 @@ export class StatisticsService {
       activityByDay[dateStr] = 0;
     }
 
-    // Подсчет повторений по дням
-    reviewLogs.forEach((log) => {
-      const reviewDate = new Date(log.review);
-      if (reviewDate >= oneWeekAgo) {
-        const dateStr = reviewDate.toISOString().split('T')[0];
-        if (activityByDay[dateStr] !== undefined) {
-          activityByDay[dateStr]++;
+    // Подсчет повторений по дням на основе last_review
+    fsrsCards.forEach((fsrsCard) => {
+      if (fsrsCard.last_review) {
+        const reviewDate = new Date(fsrsCard.last_review);
+        if (reviewDate >= oneWeekAgo) {
+          const dateStr = reviewDate.toISOString().split('T')[0];
+          if (activityByDay[dateStr] !== undefined) {
+            activityByDay[dateStr]++;
+          }
         }
       }
     });
@@ -159,24 +147,14 @@ export class StatisticsService {
     }
 
     // Получаем все карточки пользователя
-    const cards: Card[] = [];
-    for (const deck of decks) {
-      const deckCards = await this.cardRepository.findByDeckId(deck.id);
-      cards.push(...deckCards);
-    }
+    const cards = await this.cardRepository.findByUserId(userId);
 
-    // Получаем карточки, которые нужно повторить сегодня
-    const now = new Date();
-    const dueCards = await this.cardRepository.findDueCards(userId, now);
+    // Получаем карточки, которые нужно повторить сегодня через FSRS
+    const dueCards = await this.fsrsService.findDueCards(userId);
 
-    // Получаем все логи повторений
-    const reviewLogs: ReviewLog[] = [];
+    // Получаем все FSRS карточки пользователя
     const cardIds = cards.map((card) => card.id);
-
-    for (const cardId of cardIds) {
-      const logs = await this.reviewLogRepository.findByCardId(cardId);
-      reviewLogs.push(...logs);
-    }
+    const fsrsCards = await this.fsrsCardRepository.findByCardIds(cardIds);
 
     // Определяем временные периоды
     const oneWeekAgo = new Date();
@@ -185,22 +163,19 @@ export class StatisticsService {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    // Недавно изученные карточки
-    const recentReviewLogs = reviewLogs.filter(
-      (log) => new Date(log.review) >= oneWeekAgo,
-    );
-
-    const uniqueCardIds = new Set();
-    recentReviewLogs.forEach((log) => uniqueCardIds.add(log.cardId));
-    const learnedLastWeek = uniqueCardIds.size;
-
-    // Расчет процента успешных ответов
-    const successfulReviews = reviewLogs.filter(
-      (log) => log.grade === 'Good' || log.grade === 'Easy',
+    // Недавно изученные карточки (имеют last_review в пределах недели)
+    const learnedLastWeek = fsrsCards.filter(
+      (fsrsCard) =>
+        fsrsCard.last_review && new Date(fsrsCard.last_review) >= oneWeekAgo,
     ).length;
 
+    // Расчет общего процента успешных ответов
+    const totalReps = fsrsCards.reduce((sum, card) => sum + card.reps, 0);
+    const totalLapses = fsrsCards.reduce((sum, card) => sum + card.lapses, 0);
     const overallSuccessRate =
-      reviewLogs.length > 0 ? (successfulReviews / reviewLogs.length) * 100 : 0;
+      totalReps > 0
+        ? Math.round(((totalReps - totalLapses) / totalReps) * 100)
+        : 0;
 
     // Состояния карточек
     const cardStates = {
@@ -210,9 +185,9 @@ export class StatisticsService {
       Relearning: 0,
     };
 
-    cards.forEach((card) => {
-      if (card.state in cardStates) {
-        cardStates[card.state]++;
+    fsrsCards.forEach((fsrsCard) => {
+      if (fsrsCard.state in cardStates) {
+        cardStates[fsrsCard.state]++;
       }
     });
 
@@ -227,13 +202,15 @@ export class StatisticsService {
       activityByDay[dateStr] = 0;
     }
 
-    // Подсчет повторений по дням
-    reviewLogs.forEach((log) => {
-      const reviewDate = new Date(log.review);
-      if (reviewDate >= thirtyDaysAgo) {
-        const dateStr = reviewDate.toISOString().split('T')[0];
-        if (activityByDay[dateStr] !== undefined) {
-          activityByDay[dateStr]++;
+    // Подсчет повторений по дням на основе last_review
+    fsrsCards.forEach((fsrsCard) => {
+      if (fsrsCard.last_review) {
+        const reviewDate = new Date(fsrsCard.last_review);
+        if (reviewDate >= thirtyDaysAgo) {
+          const dateStr = reviewDate.toISOString().split('T')[0];
+          if (activityByDay[dateStr] !== undefined) {
+            activityByDay[dateStr]++;
+          }
         }
       }
     });
@@ -246,15 +223,16 @@ export class StatisticsService {
       deckReviews[deck.id] = 0;
     });
 
-    // Подсчет повторений по колодам за последние 30 дней
-    const last30DaysLogs = reviewLogs.filter(
-      (log) => new Date(log.review) >= thirtyDaysAgo,
-    );
-
-    last30DaysLogs.forEach((log) => {
-      const card = cards.find((c) => c.id === log.cardId);
-      if (card && deckReviews[card.deckId] !== undefined) {
-        deckReviews[card.deckId]++;
+    // Подсчет активности по колодам за последние 30 дней
+    fsrsCards.forEach((fsrsCard) => {
+      if (fsrsCard.last_review) {
+        const reviewDate = new Date(fsrsCard.last_review);
+        if (reviewDate >= thirtyDaysAgo) {
+          const card = cards.find((c) => c.id === fsrsCard.cardId);
+          if (card && deckReviews[card.deckId] !== undefined) {
+            deckReviews[card.deckId]++;
+          }
+        }
       }
     });
 

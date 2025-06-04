@@ -45,6 +45,13 @@ export class Card {
   deckId: string;
 
   @ApiProperty({
+    type: String,
+    example: 'cbcfa8b8-3a25-4adb-a9c6-e325f0d0f3ae',
+    description: 'Идентификатор пользователя-владельца',
+  })
+  userId: string;
+
+  @ApiProperty({
     type: Boolean,
     example: false,
     description: 'Флаг удаления',

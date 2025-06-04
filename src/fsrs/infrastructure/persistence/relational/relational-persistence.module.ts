@@ -1,17 +1,17 @@
 import { Module } from '@nestjs/common';
-import { FsrsRepository } from '../fsrs-card.repository';
-import { FsrsRelationalRepository } from './repositories/fsrs.repository';
+import { FsrsCardRepository } from '../fsrs-card.repository';
+import { FsrsCardRelationalRepository } from './repositories/fsrs-card.repository';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { FsrsEntity } from './entities/fsrs.entity';
+import { FsrsCardEntity } from './entities/fsrs-card.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([FsrsEntity])],
+  imports: [TypeOrmModule.forFeature([FsrsCardEntity])],
   providers: [
     {
-      provide: FsrsRepository,
-      useClass: FsrsRelationalRepository,
+      provide: FsrsCardRepository,
+      useClass: FsrsCardRelationalRepository,
     },
   ],
-  exports: [FsrsRepository],
+  exports: [FsrsCardRepository],
 })
 export class RelationalFsrsPersistenceModule {}

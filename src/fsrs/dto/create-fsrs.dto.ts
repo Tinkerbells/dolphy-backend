@@ -1,3 +1,4 @@
 export class CreateFsrsDto {
-  // Don't forget to use the class-validator decorators in the DTO properties.
+  // Пустой DTO для совместимости с существующими контроллерами
+  // FSRS карточки создаются автоматически при создании обычных карточек
 }

@@ -1,14 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty } from 'class-validator';
-import { RatingType, ratings } from '../../review-logs/domain/review-log';
+import { Rating, RatingType } from 'ts-fsrs';
 
 export class GradeCardDto {
   @ApiProperty({
-    enum: ratings,
+    enum: Rating,
     description: 'Оценка повторения',
     example: 'Good',
   })
-  @IsEnum(ratings)
+  @IsEnum(Rating)
   @IsNotEmpty()
   rating: RatingType;
 }
