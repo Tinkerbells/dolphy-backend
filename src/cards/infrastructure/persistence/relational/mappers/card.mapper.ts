@@ -28,7 +28,7 @@ export class CardMapper {
     persistenceEntity.source = domainEntity.source;
     persistenceEntity.metadata = domainEntity.metadata;
     persistenceEntity.deckId = domainEntity.deckId;
-    persistenceEntity.userId = domainEntity.userId;
+    persistenceEntity.userId = String(domainEntity.userId);
     persistenceEntity.deleted = domainEntity.deleted;
     persistenceEntity.createdAt = domainEntity.createdAt;
     persistenceEntity.updatedAt = domainEntity.updatedAt;

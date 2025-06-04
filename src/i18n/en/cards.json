@@ -4,26 +4,17 @@
   "deleted": "Card deleted successfully",
   "restored": "Card restored successfully",
   "notFound": "Card not found",
-  "cardGraded": "Card graded successfully",
-  "cardState": {
-    "new": "New",
-    "learning": "Learning",
-    "review": "Review",
-    "relearning": "Relearning"
-  },
-  "grade": {
-    "again": "Again",
-    "hard": "Hard",
-    "good": "Good",
-    "easy": "Easy"
-  },
   "errors": {
-    "invalidRating": "Invalid rating",
-    "failedToUpdate": "Failed to update card"
+    "noPermission": "You don't have permission to modify this card",
+    "questionRequired": "Question is required",
+    "answerRequired": "Answer is required",
+    "questionTooLong": "Question must be no more than 1000 characters",
+    "answerTooLong": "Answer must be no more than 2000 characters",
+    "deckNotFound": "Deck not found",
+    "invalidSource": "Invalid source"
   },
   "success": {
-    "reset": "Card reset successfully",
-    "undoGrade": "Last grade undone successfully",
-    "suspended": "Card suspended successfully"
+    "batchCreated": "Cards created successfully",
+    "moved": "Cards moved successfully"
   }
 }

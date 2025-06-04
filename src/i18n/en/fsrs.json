@@ -1,0 +1,42 @@
+{
+  "cardGraded": "Card graded successfully",
+  "cardReset": "Card reset successfully",
+  "cardSuspended": "Card suspended successfully",
+  "gradeUndone": "Last grade undone successfully",
+  "cardState": {
+    "new": "New",
+    "learning": "Learning",
+    "review": "Review",
+    "relearning": "Relearning"
+  },
+  "grade": {
+    "manual": "Manual",
+    "again": "Again",
+    "hard": "Hard",
+    "good": "Good",
+    "easy": "Easy"
+  },
+  "errors": {
+    "cardNotFound": "Card not found",
+    "fsrsCardNotFound": "FSRS card not found",
+    "noPermission": "You don't have permission to modify this card",
+    "invalidRating": "Invalid rating",
+    "failedToUpdate": "Failed to update FSRS card",
+    "alreadyInitialized": "FSRS card already initialized"
+  },
+  "success": {
+    "cardGraded": "Card graded successfully",
+    "reset": "Card reset successfully",
+    "suspended": "Card suspended successfully",
+    "undoGrade": "Last grade undone successfully",
+    "initialized": "FSRS card initialized successfully"
+  },
+  "info": {
+    "dueCards": "Cards due for review",
+    "retentionProbability": "Retention probability",
+    "nextReviewDate": "Next review date",
+    "intervalDays": "Interval in days",
+    "difficulty": "Difficulty",
+    "stability": "Stability"
+  }
+}

@@ -2,9 +2,10 @@ import { Module } from '@nestjs/common';
 import { FsrsService } from './fsrs.service';
 import { FsrsController } from './fsrs.controller';
 import { RelationalFsrsPersistenceModule } from './infrastructure/persistence/relational/relational-persistence.module';
+import { CardsRepositoryModule } from '../cards/cards-repository.module';
 
 @Module({
-  imports: [RelationalFsrsPersistenceModule],
+  imports: [RelationalFsrsPersistenceModule, CardsRepositoryModule],
   controllers: [FsrsController],
   providers: [FsrsService],
   exports: [FsrsService, RelationalFsrsPersistenceModule],

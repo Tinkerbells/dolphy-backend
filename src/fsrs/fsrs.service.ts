@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { FsrsCard, StateType, states } from './domain/fsrs-card';
 import {
   fsrs,
@@ -10,13 +14,19 @@ import {
   RatingType,
 } from 'ts-fsrs';
 import { FsrsCardRepository } from './infrastructure/persistence/fsrs-card.repository';
+import { CardRepository } from '../cards/infrastructure/persistence/card.repository';
 import { User } from 'src/users/domain/user';
+import { Card } from '../cards/domain/card';
+import { t } from '../utils/i18n';
 
 @Injectable()
 export class FsrsService {
   private readonly fsrsInstance: FSRS;
 
-  constructor(private readonly fsrsCardRepository: FsrsCardRepository) {
+  constructor(
+    private readonly fsrsCardRepository: FsrsCardRepository,
+    private readonly cardRepository: CardRepository,
+  ) {
     // Инициализация с параметрами по умолчанию
     this.fsrsInstance = fsrs();
   }
@@ -147,6 +157,135 @@ export class FsrsService {
   }
 
   /**
+   * Оценить карточку и обновить ее состояние (перенесено из CardsService)
+   */
+  async gradeCard(
+    cardId: string,
+    rating: RatingType,
+    userId: User['id'],
+  ): Promise<{ card: Card; fsrsCard: FsrsCard }> {
+    const card = await this.cardRepository.findById(cardId);
+    if (!card) {
+      throw new NotFoundException(t('fsrs.errors.cardNotFound'));
+    }
+
+    // Проверяем, что пользователь является владельцем карточки
+    if (card.userId !== String(userId)) {
+      throw new ForbiddenException(t('fsrs.errors.noPermission'));
+    }
+
+    // Применяем оценку с помощью FSRS
+    const fsrsCard = await this.applyRating(cardId, rating);
+
+    return { card, fsrsCard };
+  }
+
+  /**
+   * Приостановить карточку до указанной даты (перенесено из CardsService)
+   */
+  async suspendCard(
+    cardId: string,
+    until: Date,
+    userId?: string,
+  ): Promise<{ card: Card; fsrsCard: FsrsCard }> {
+    const card = await this.cardRepository.findById(cardId);
+    if (!card) {
+      throw new NotFoundException(t('fsrs.errors.cardNotFound'));
+    }
+
+    // Проверяем права доступа, если передан userId
+    if (userId && card.userId !== userId) {
+      throw new ForbiddenException(t('fsrs.errors.noPermission'));
+    }
+
+    const fsrsCard = await this.fsrsCardRepository.findByCardId(cardId);
+    if (!fsrsCard) {
+      throw new Error('FsrsCard not found');
+    }
+
+    fsrsCard.suspended = until;
+    const updatedFsrsCard = await this.fsrsCardRepository.update(
+      fsrsCard.id,
+      fsrsCard,
+    );
+    if (!updatedFsrsCard) {
+      throw new Error('Failed to update FsrsCard');
+    }
+
+    return { card, fsrsCard: updatedFsrsCard };
+  }
+
+  /**
+   * Сбросить состояние карточки до начального (перенесено из CardsService)
+   */
+  async resetCard(
+    cardId: string,
+    userId?: string,
+  ): Promise<{ card: Card; fsrsCard: FsrsCard }> {
+    const card = await this.cardRepository.findById(cardId);
+    if (!card) {
+      throw new NotFoundException(t('fsrs.errors.cardNotFound'));
+    }
+
+    // Проверяем права доступа, если передан userId
+    if (userId && card.userId !== userId) {
+      throw new ForbiddenException(t('fsrs.errors.noPermission'));
+    }
+
+    const fsrsCard = await this.fsrsCardRepository.findByCardId(cardId);
+    if (!fsrsCard) {
+      throw new Error('FsrsCard not found');
+    }
+
+    // Сбрасываем состояние карточки до начального
+    const now = new Date();
+    const emptyCard = createEmptyCard();
+
+    fsrsCard.state = states[emptyCard.state];
+    fsrsCard.due = emptyCard.due;
+    fsrsCard.stability = emptyCard.stability;
+    fsrsCard.difficulty = emptyCard.difficulty;
+    fsrsCard.elapsed_days = emptyCard.elapsed_days;
+    fsrsCard.scheduled_days = emptyCard.scheduled_days;
+    fsrsCard.reps = emptyCard.reps;
+    fsrsCard.lapses = emptyCard.lapses;
+    fsrsCard.suspended = now;
+    fsrsCard.last_review = undefined;
+
+    const updatedFsrsCard = await this.fsrsCardRepository.update(
+      fsrsCard.id,
+      fsrsCard,
+    );
+    if (!updatedFsrsCard) {
+      throw new Error('Failed to update FsrsCard');
+    }
+
+    return { card, fsrsCard: updatedFsrsCard };
+  }
+
+  /**
+   * Отменить последнюю оценку карточки (перенесено из CardsService)
+   */
+  async undoLastGrade(
+    cardId: string,
+    userId?: string,
+  ): Promise<{ card: Card; fsrsCard: FsrsCard }> {
+    const card = await this.cardRepository.findById(cardId);
+    if (!card) {
+      throw new NotFoundException(t('fsrs.errors.cardNotFound'));
+    }
+
+    // Проверяем права доступа, если передан userId
+    if (userId && card.userId !== userId) {
+      throw new ForbiddenException(t('fsrs.errors.noPermission'));
+    }
+
+    const fsrsCard = await this.undoLastRating(cardId);
+
+    return { card, fsrsCard };
+  }
+
+  /**
    * Возвращает вероятность запоминания карточки на текущий момент
    */
   async getRetentionProbability(cardId: string): Promise<number> {
@@ -248,62 +387,6 @@ export class FsrsService {
    */
   async findByCardId(cardId: string): Promise<FsrsCard | null> {
     return this.fsrsCardRepository.findByCardId(cardId);
-  }
-
-  /**
-   * Приостанавливает карточку до указанной даты
-   */
-  async suspendCard(cardId: string, until: Date): Promise<FsrsCard> {
-    const fsrsCard = await this.fsrsCardRepository.findByCardId(cardId);
-    if (!fsrsCard) {
-      throw new Error('FsrsCard not found');
-    }
-
-    fsrsCard.suspended = until;
-    const updatedCard = await this.fsrsCardRepository.update(
-      fsrsCard.id,
-      fsrsCard,
-    );
-    if (!updatedCard) {
-      throw new Error('Failed to update FsrsCard');
-    }
-
-    return updatedCard;
-  }
-
-  /**
-   * Сбрасывает карточку к начальному состоянию
-   */
-  async resetCard(cardId: string): Promise<FsrsCard> {
-    const fsrsCard = await this.fsrsCardRepository.findByCardId(cardId);
-    if (!fsrsCard) {
-      throw new Error('FsrsCard not found');
-    }
-
-    // Сбрасываем состояние карточки до начального
-    const now = new Date();
-    const emptyCard = createEmptyCard();
-
-    fsrsCard.state = states[emptyCard.state];
-    fsrsCard.due = emptyCard.due;
-    fsrsCard.stability = emptyCard.stability;
-    fsrsCard.difficulty = emptyCard.difficulty;
-    fsrsCard.elapsed_days = emptyCard.elapsed_days;
-    fsrsCard.scheduled_days = emptyCard.scheduled_days;
-    fsrsCard.reps = emptyCard.reps;
-    fsrsCard.lapses = emptyCard.lapses;
-    fsrsCard.suspended = now;
-    fsrsCard.last_review = undefined;
-
-    const updatedCard = await this.fsrsCardRepository.update(
-      fsrsCard.id,
-      fsrsCard,
-    );
-    if (!updatedCard) {
-      throw new Error('Failed to update FsrsCard');
-    }
-
-    return updatedCard;
   }
 
   /**

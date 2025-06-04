@@ -5,7 +5,6 @@ import { CardEntity } from '../../../../cards/infrastructure/persistence/relatio
 import { DeckEntity } from '../../../../decks/infrastructure/persistence/relational/entities/deck.entity';
 import { FsrsCardEntity } from '../../../../fsrs/infrastructure/persistence/relational/entities/fsrs-card.entity';
 import { v4 as uuidv4 } from 'uuid';
-import { Card } from 'src/cards/domain/card';
 
 @Injectable()
 export class CardSeedService {
@@ -45,7 +44,7 @@ export class CardSeedService {
         (deck) => deck.name === 'География: Столицы мира',
       );
 
-      const cards: Card[] = [];
+      const cards: CardEntity[] = [];
       const fsrsCards: FsrsCardEntity[] = [];
 
       // Карточки японского языка

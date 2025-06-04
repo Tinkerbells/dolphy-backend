@@ -14,12 +14,16 @@ import {
 } from '@nestjs/common';
 import { FsrsService } from './fsrs.service';
 import { UpdateFsrsDto } from './dto/update-fsrs.dto';
+import { GradeCardDto } from './dto/grade-card.dto';
+import { SuspendCardDto } from './dto/suspend-card.dto';
+import { CardActionResponseDto } from './dto/card-action-response.dto';
 import {
   ApiBearerAuth,
   ApiOkResponse,
   ApiParam,
   ApiTags,
   ApiOperation,
+  ApiBody,
 } from '@nestjs/swagger';
 import { FsrsCard } from './domain/fsrs-card';
 import { AuthGuard } from '@nestjs/passport';
@@ -29,6 +33,8 @@ import {
 } from '../utils/dto/infinity-pagination-response.dto';
 import { infinityPagination } from '../utils/infinity-pagination';
 import { FindAllFsrsDto } from './dto/find-all-fsrs.dto';
+import { t } from '../utils/i18n';
+import { User } from '../users/domain/user';
 
 @ApiTags('FSRS')
 @ApiBearerAuth()
@@ -132,6 +138,70 @@ export class FsrsController {
     return { retention };
   }
 
+  // ========== ПЕРЕНЕСЕННЫЕ МЕТОДЫ ИЗ CARDS ==========
+
+  @Post('card/:cardId/grade')
+  @ApiOperation({ summary: 'Оценить карточку и обновить ее состояние' })
+  @ApiParam({
+    name: 'cardId',
+    type: String,
+    required: true,
+    description: 'Уникальный идентификатор карточки',
+  })
+  @ApiBody({ type: GradeCardDto })
+  @ApiOkResponse({
+    type: CardActionResponseDto,
+    description: 'Результат оценки карточки',
+  })
+  @HttpCode(HttpStatus.OK)
+  async gradeCard(
+    @Param('cardId') cardId: string,
+    @Body() body: GradeCardDto,
+    @Request() req: { user: User },
+  ): Promise<CardActionResponseDto> {
+    const result = await this.fsrsService.gradeCard(
+      cardId,
+      body.rating,
+      req.user.id,
+    );
+
+    return {
+      ...result,
+      message: t('fsrs.success.cardGraded'),
+    };
+  }
+
+  @Post('card/:cardId/suspend')
+  @ApiOperation({ summary: 'Приостановить карточку до указанной даты' })
+  @ApiParam({
+    name: 'cardId',
+    type: String,
+    required: true,
+    description: 'Уникальный идентификатор карточки',
+  })
+  @ApiBody({ type: SuspendCardDto })
+  @ApiOkResponse({
+    type: CardActionResponseDto,
+    description: 'Результат приостановки карточки',
+  })
+  @HttpCode(HttpStatus.OK)
+  async suspendCard(
+    @Param('cardId') cardId: string,
+    @Body() body: SuspendCardDto,
+    @Request() req: { user: User },
+  ): Promise<CardActionResponseDto> {
+    const result = await this.fsrsService.suspendCard(
+      cardId,
+      body.until,
+      String(req.user.id),
+    );
+
+    return {
+      ...result,
+      message: t('fsrs.success.suspended'),
+    };
+  }
+
   @Post('card/:cardId/reset')
   @ApiOperation({ summary: 'Сбросить состояние карточки до начального' })
   @ApiParam({
@@ -141,12 +211,23 @@ export class FsrsController {
     description: 'Уникальный идентификатор карточки',
   })
   @ApiOkResponse({
-    type: FsrsCard,
+    type: CardActionResponseDto,
     description: 'Карточка со сброшенным состоянием',
   })
   @HttpCode(HttpStatus.OK)
-  async resetCard(@Param('cardId') cardId: string): Promise<FsrsCard> {
-    return this.fsrsService.resetCard(cardId);
+  async resetCard(
+    @Param('cardId') cardId: string,
+    @Request() req: { user: User },
+  ): Promise<CardActionResponseDto> {
+    const result = await this.fsrsService.resetCard(
+      cardId,
+      String(req.user.id),
+    );
+
+    return {
+      ...result,
+      message: t('fsrs.success.reset'),
+    };
   }
 
   @Post('card/:cardId/undo')
@@ -158,13 +239,26 @@ export class FsrsController {
     description: 'Уникальный идентификатор карточки',
   })
   @ApiOkResponse({
-    type: FsrsCard,
+    type: CardActionResponseDto,
     description: 'Карточка с отмененной последней оценкой',
   })
   @HttpCode(HttpStatus.OK)
-  async undoLastRating(@Param('cardId') cardId: string): Promise<FsrsCard> {
-    return this.fsrsService.undoLastRating(cardId);
+  async undoLastGrade(
+    @Param('cardId') cardId: string,
+    @Request() req: { user: User },
+  ): Promise<CardActionResponseDto> {
+    const result = await this.fsrsService.undoLastGrade(
+      cardId,
+      String(req.user.id),
+    );
+
+    return {
+      ...result,
+      message: t('fsrs.success.undoGrade'),
+    };
   }
+
+  // ========== ОРИГИНАЛЬНЫЕ МЕТОДЫ ==========
 
   @Get()
   @ApiOkResponse({

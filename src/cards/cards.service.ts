@@ -11,8 +11,6 @@ import { Card } from './domain/card';
 import { FsrsService } from '../fsrs/fsrs.service';
 import { OperationResultDto } from '../utils/dto/operation-result.dto';
 import { t } from 'src/utils/i18n';
-import { RatingType } from 'ts-fsrs';
-import { User } from 'src/users/domain/user';
 
 @Injectable()
 export class CardsService {
@@ -111,82 +109,6 @@ export class CardsService {
     }
 
     return this.cardRepository.update(id, updateData);
-  }
-
-  async grade(
-    id: Card['id'],
-    rating: RatingType,
-    userId: User['id'],
-  ): Promise<{ card: Card }> {
-    const card = await this.cardRepository.findById(id);
-    if (!card) {
-      throw new NotFoundException(t('cards.notFound'));
-    }
-
-    // Проверяем, что пользователь является владельцем карточки
-    if (card.userId !== String(userId)) {
-      throw new ForbiddenException(t('cards.errors.noPermission'));
-    }
-
-    // Применяем оценку с помощью FSRS
-    await this.fsrsService.applyRating(id, rating);
-
-    return { card };
-  }
-
-  async suspend(
-    id: Card['id'],
-    until: Date,
-    userId: string,
-  ): Promise<Card | null> {
-    const card = await this.cardRepository.findById(id);
-    if (!card) {
-      throw new NotFoundException(t('cards.notFound'));
-    }
-
-    // Проверяем, что пользователь является владельцем карточки
-    if (card.userId !== userId) {
-      throw new ForbiddenException(t('cards.errors.noPermission'));
-    }
-
-    // Приостанавливаем FSRS карточку
-    await this.fsrsService.suspendCard(id, until);
-
-    return card;
-  }
-
-  async reset(id: Card['id'], userId: string): Promise<Card | null> {
-    const card = await this.cardRepository.findById(id);
-    if (!card) {
-      throw new NotFoundException(t('cards.notFound'));
-    }
-
-    // Проверяем, что пользователь является владельцем карточки
-    if (card.userId !== userId) {
-      throw new ForbiddenException(t('cards.errors.noPermission'));
-    }
-
-    // Сбрасываем FSRS карточку
-    await this.fsrsService.resetCard(id);
-
-    return card;
-  }
-
-  async undoGrade(id: Card['id'], userId: string): Promise<{ card: Card }> {
-    const card = await this.cardRepository.findById(id);
-    if (!card) {
-      throw new NotFoundException(t('cards.notFound'));
-    }
-
-    // Проверяем, что пользователь является владельцем карточки
-    if (card.userId !== userId) {
-      throw new ForbiddenException(t('cards.errors.noPermission'));
-    }
-
-    // Отменяем последнюю оценку через FSRS
-    await this.fsrsService.undoLastRating(id);
-
-    return { card };
   }
 
   async softDelete(
