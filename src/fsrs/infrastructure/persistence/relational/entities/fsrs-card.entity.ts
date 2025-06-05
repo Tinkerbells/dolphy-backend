@@ -13,19 +13,27 @@ import { CardEntity } from '../../../../../cards/infrastructure/persistence/rela
 @Entity({
   name: 'fsrs_card',
 })
+@Index(['due', 'suspended', 'deleted'])
+@Index(['cardId', 'deleted'])
+@Index(['due', 'deleted'])
+@Index(['state', 'deleted'])
 export class FsrsCardEntity extends EntityRelationalHelper {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column()
-  @Index()
+  @Index('IDX_FSRS_CARD_CARD_ID') // Отдельный индекс для cardId
   cardId: string;
 
-  @OneToOne(() => CardEntity)
+  @OneToOne(() => CardEntity, {
+    eager: false, // Контролируем загрузку вручную для оптимизации
+    cascade: false,
+  })
   @JoinColumn({ name: 'cardId' })
-  card: CardEntity;
+  card?: CardEntity;
 
   @Column({ type: 'timestamp' })
+  @Index('IDX_FSRS_CARD_DUE') // Индекс для быстрого поиска по дате
   due: Date;
 
   @Column({ type: 'real' })
@@ -47,15 +55,18 @@ export class FsrsCardEntity extends EntityRelationalHelper {
   lapses: number;
 
   @Column()
+  @Index('IDX_FSRS_CARD_STATE') // Индекс для поиска по состоянию
   state: string;
 
   @Column({ type: 'timestamp', nullable: true })
   last_review?: Date;
 
   @Column({ type: 'timestamp' })
+  @Index('IDX_FSRS_CARD_SUSPENDED') // Индекс для проверки приостановки
   suspended: Date;
 
   @Column({ default: false })
+  @Index('IDX_FSRS_CARD_DELETED') // Индекс для фильтрации удаленных
   deleted: boolean;
 
   @CreateDateColumn()

@@ -24,8 +24,14 @@ import {
   ApiTags,
   ApiOperation,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
-import { FsrsCard, FsrsCardWithContent } from './domain/fsrs-card';
+import {
+  FsrsCard,
+  FsrsCardWithContent,
+  StateType,
+  states,
+} from './domain/fsrs-card';
 import { AuthGuard } from '@nestjs/passport';
 import {
   InfinityPaginationResponse,
@@ -46,11 +52,15 @@ import { User } from '../users/domain/user';
 export class FsrsController {
   constructor(private readonly fsrsService: FsrsService) {}
 
+  // ========== ОПТИМИЗИРОВАННЫЕ МЕТОДЫ ПОИСКА ==========
+
   @Get('due')
-  @ApiOperation({ summary: 'Получить карточки для повторения пользователя' })
+  @ApiOperation({
+    summary: 'Получить карточки для повторения пользователя (ОПТИМИЗИРОВАННЫЙ)',
+  })
   @ApiOkResponse({
-    type: [FsrsCard],
-    description: 'Карточки, которые нужно повторить',
+    type: [FsrsCardWithContent],
+    description: 'Карточки, которые нужно повторить с контентом',
   })
   @HttpCode(HttpStatus.OK)
   async findDueCards(@Request() req): Promise<FsrsCardWithContent[]> {
@@ -59,7 +69,8 @@ export class FsrsController {
 
   @Get('due/deck/:deckId')
   @ApiOperation({
-    summary: 'Получить карточки для повторения из конкретной колоды',
+    summary:
+      'Получить карточки для повторения из конкретной колоды (ОПТИМИЗИРОВАННЫЙ)',
   })
   @ApiParam({
     name: 'deckId',
@@ -67,14 +78,91 @@ export class FsrsController {
     type: String,
   })
   @ApiOkResponse({
-    type: [FsrsCard],
-    description: 'Карточки, которые нужно повторить из указанной колоды',
+    type: [FsrsCardWithContent],
+    description:
+      'Карточки, которые нужно повторить из указанной колоды с контентом',
   })
   @HttpCode(HttpStatus.OK)
   async findDueCardsByDeckId(
     @Param('deckId') deckId: string,
   ): Promise<FsrsCardWithContent[]> {
     return this.fsrsService.findDueCardsByDeckId(deckId);
+  }
+
+  // ========== НОВЫЕ ОПТИМИЗИРОВАННЫЕ МЕТОДЫ ==========
+
+  @Get('cards/by-state/:state')
+  @ApiOperation({ summary: 'Получить карточки по состоянию с пагинацией' })
+  @ApiParam({
+    name: 'state',
+    description: 'Состояние карточки',
+    enum: states,
+  })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiOkResponse({
+    type: InfinityPaginationResponse(FsrsCardWithContent),
+    description: 'Карточки указанного состояния с контентом',
+  })
+  @HttpCode(HttpStatus.OK)
+  async findCardsByState(
+    @Param('state') state: StateType,
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Request() req,
+  ): Promise<InfinityPaginationResponseDto<FsrsCardWithContent>> {
+    if (limit > 50) limit = 50;
+
+    const cards = await this.fsrsService.findCardsByState(
+      state,
+      { page, limit },
+      req.user.id,
+    );
+
+    return infinityPagination(cards, { page, limit });
+  }
+
+  @Get('statistics/states')
+  @ApiOperation({
+    summary: 'Получить статистику по состояниям карточек пользователя',
+  })
+  @ApiOkResponse({
+    description: 'Количество карточек в каждом состоянии',
+    schema: {
+      type: 'object',
+      properties: {
+        New: { type: 'number', example: 10 },
+        Learning: { type: 'number', example: 5 },
+        Review: { type: 'number', example: 20 },
+        Relearning: { type: 'number', example: 2 },
+      },
+    },
+  })
+  @HttpCode(HttpStatus.OK)
+  async getStateStatistics(@Request() req): Promise<Record<string, number>> {
+    return this.fsrsService.getStateStatistics(req.user.id);
+  }
+
+  @Get('upcoming')
+  @ApiOperation({
+    summary: 'Получить карточки которые скоро будут готовы к повторению',
+  })
+  @ApiQuery({
+    name: 'days',
+    required: false,
+    type: Number,
+    description: 'Количество дней вперед (по умолчанию 7)',
+  })
+  @ApiOkResponse({
+    type: [FsrsCardWithContent],
+    description: 'Карточки которые будут готовы к повторению в ближайшие дни',
+  })
+  @HttpCode(HttpStatus.OK)
+  async findUpcomingDueCards(
+    @Query('days') days = 7,
+    @Request() req,
+  ): Promise<FsrsCardWithContent[]> {
+    return this.fsrsService.findUpcomingDueCards(req.user.id, days);
   }
 
   @Get('card/:cardId')
@@ -138,7 +226,7 @@ export class FsrsController {
     return { retention };
   }
 
-  // ========== ПЕРЕНЕСЕННЫЕ МЕТОДЫ ИЗ CARDS ==========
+  // ========== ДЕЙСТВИЯ С КАРТОЧКАМИ ==========
 
   @Post('card/:cardId/grade')
   @ApiOperation({ summary: 'Оценить карточку и обновить ее состояние' })
@@ -258,7 +346,7 @@ export class FsrsController {
     };
   }
 
-  // ========== ОРИГИНАЛЬНЫЕ МЕТОДЫ ==========
+  // ========== АДМИНИСТРАТИВНЫЕ МЕТОДЫ ==========
 
   @Get()
   @ApiOkResponse({

@@ -1,4 +1,8 @@
-import { FsrsCard, StateType } from '../../../../domain/fsrs-card';
+import {
+  FsrsCard,
+  FsrsCardWithContent,
+  StateType,
+} from '../../../../domain/fsrs-card';
 import { FsrsCardEntity } from '../entities/fsrs-card.entity';
 
 export class FsrsCardMapper {
@@ -42,5 +46,18 @@ export class FsrsCardMapper {
     persistenceEntity.createdAt = domainEntity.createdAt;
 
     return persistenceEntity;
+  }
+
+  static toFsrsCardWithContent(entity: FsrsCardEntity): FsrsCardWithContent {
+    const fsrsCard = FsrsCardMapper.toDomain(entity);
+
+    if (!entity.card) {
+      throw new Error(`Card not found for FsrsCard ${entity.id}`);
+    }
+
+    return {
+      ...fsrsCard,
+      card: entity.card,
+    } as FsrsCardWithContent;
   }
 }
