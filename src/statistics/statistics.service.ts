@@ -5,6 +5,7 @@ import { FsrsService } from '../fsrs/fsrs.service';
 import { FsrsCardRepository } from '../fsrs/infrastructure/persistence/fsrs-card.repository';
 import { DeckStatisticsDto } from './dto/deck-statistics.dto';
 import { UserStatisticsDto } from './dto/user-statistics.dto';
+import { State } from 'src/fsrs/domain/fsrs-card';
 
 @Injectable()
 export class StatisticsService {
@@ -39,16 +40,16 @@ export class StatisticsService {
 
     // Подсчет карточек по состояниям
     const newCards = fsrsCards.filter(
-      (fsrsCard) => fsrsCard.state === 'New',
+      (fsrsCard) => fsrsCard.state === State.New,
     ).length;
     const learningCards = fsrsCards.filter(
-      (fsrsCard) => fsrsCard.state === 'Learning',
+      (fsrsCard) => fsrsCard.state === State.Learning,
     ).length;
     const reviewCards = fsrsCards.filter(
-      (fsrsCard) => fsrsCard.state === 'Review',
+      (fsrsCard) => fsrsCard.state === State.Review,
     ).length;
     const relearningCards = fsrsCards.filter(
-      (fsrsCard) => fsrsCard.state === 'Relearning',
+      (fsrsCard) => fsrsCard.state === State.Relearning,
     ).length;
 
     // Подсчет карточек, изученных за последнюю неделю

@@ -56,7 +56,7 @@ export class FsrsCardEntity extends EntityRelationalHelper {
 
   @Column()
   @Index('IDX_FSRS_CARD_STATE') // Индекс для поиска по состоянию
-  state: string;
+  state: number;
 
   @Column({ type: 'timestamp', nullable: true })
   last_review?: Date;

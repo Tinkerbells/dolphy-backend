@@ -6,14 +6,12 @@ import {
 import {
   FsrsCard,
   FsrsCardWithContent,
-  StateType,
-  states,
+  Rating,
+  State,
 } from './domain/fsrs-card';
 import {
   fsrs,
   type Card as FsrsApiCard,
-  Rating,
-  State,
   createEmptyCard,
   FSRS,
   RatingType,
@@ -61,7 +59,7 @@ export class FsrsService {
     fsrsCard.scheduled_days = emptyFsrsCard.scheduled_days;
     fsrsCard.reps = emptyFsrsCard.reps;
     fsrsCard.lapses = emptyFsrsCard.lapses;
-    fsrsCard.state = states[emptyFsrsCard.state];
+    fsrsCard.state = emptyFsrsCard.state;
     fsrsCard.last_review = emptyFsrsCard.last_review;
     fsrsCard.suspended = now;
     fsrsCard.deleted = false;
@@ -80,7 +78,7 @@ export class FsrsService {
   }
 
   async findCardsByState(
-    state: StateType,
+    state: State,
     paginationOptions: IPaginationOptions,
     userId?: string,
   ): Promise<FsrsCardWithContent[]> {
@@ -104,7 +102,7 @@ export class FsrsService {
 
   async gradeCard(
     cardId: string,
-    rating: RatingType,
+    rating: Rating,
     userId: User['id'],
   ): Promise<{ card: Card; fsrsCard: FsrsCard }> {
     // Получаем Card, если нужно проверить права доступа
@@ -128,7 +126,7 @@ export class FsrsService {
    * Пакетная оценка карточек для оптимизации
    */
   async gradeCards(
-    grades: Array<{ cardId: string; rating: RatingType }>,
+    grades: Array<{ cardId: string; rating: Rating }>,
     userId: User['id'],
   ): Promise<Array<{ card: Card; fsrsCard: FsrsCard }>> {
     // Получаем все карточки за один запрос
@@ -177,16 +175,12 @@ export class FsrsService {
   /**
    * Вычисление нового состояния FSRS карточки без сохранения в БД
    */
-  private calculateNewFsrsState(
-    fsrsCard: FsrsCard,
-    rating: RatingType,
-  ): FsrsCard {
+  private calculateNewFsrsState(fsrsCard: FsrsCard, rating: Rating): FsrsCard {
     const fsrsApiCard = this.toFsrsApiCard(fsrsCard);
     const now = new Date();
-    const ratingEnum = this.getRatingEnum(rating);
 
-    if (ratingEnum !== Rating.Manual) {
-      const result = this.fsrsInstance.next(fsrsApiCard, now, ratingEnum);
+    if (rating !== Rating.Manual) {
+      const result = this.fsrsInstance.next(fsrsApiCard, now, rating);
 
       // Создаем новый объект с обновленными данными
       return {
@@ -198,7 +192,7 @@ export class FsrsService {
         scheduled_days: result.card.scheduled_days,
         reps: result.card.reps,
         lapses: result.card.lapses,
-        state: states[result.card.state],
+        state: result.card.state,
         last_review: now,
       };
     }
@@ -209,7 +203,7 @@ export class FsrsService {
   /**
    * Применяет оценку к FSRS карточке по алгоритму FSRS
    */
-  async applyRating(cardId: string, rating: RatingType): Promise<FsrsCard> {
+  async applyRating(cardId: string, rating: Rating): Promise<FsrsCard> {
     const fsrsCard = await this.fsrsCardRepository.findByCardId(cardId);
     if (!fsrsCard) {
       throw new Error('FsrsCard not found');
@@ -288,7 +282,7 @@ export class FsrsService {
     const emptyCard = createEmptyCard();
 
     const resetData = {
-      state: states[emptyCard.state],
+      state: emptyCard.state,
       due: emptyCard.due,
       stability: emptyCard.stability,
       difficulty: emptyCard.difficulty,
@@ -356,7 +350,7 @@ export class FsrsService {
       {
         due: Date;
         interval: number;
-        state: StateType;
+        state: State;
       }
     >
   > {
@@ -374,7 +368,7 @@ export class FsrsService {
       {
         due: Date;
         interval: number;
-        state: StateType;
+        state: State;
       }
     > = {} as any;
 
@@ -394,7 +388,7 @@ export class FsrsService {
       result[rating] = {
         due: previewResult.card.due,
         interval,
-        state: states[previewResult.card.state] as StateType,
+        state: previewResult.card.state,
       };
     }
 
@@ -426,7 +420,7 @@ export class FsrsService {
       if (undoData.reps === 0) {
         const emptyCard = createEmptyCard();
         Object.assign(undoData, {
-          state: states[emptyCard.state],
+          state: emptyCard.state,
           due: emptyCard.due,
           stability: emptyCard.stability,
           difficulty: emptyCard.difficulty,
@@ -494,24 +488,9 @@ export class FsrsService {
       scheduled_days: fsrsCard.scheduled_days,
       reps: fsrsCard.reps,
       lapses: fsrsCard.lapses,
-      state: this.getStateEnum(fsrsCard.state),
+      state: fsrsCard.state,
       last_review: fsrsCard.last_review,
     };
-  }
-
-  private getStateEnum(state: StateType): State {
-    switch (state) {
-      case 'New':
-        return State.New;
-      case 'Learning':
-        return State.Learning;
-      case 'Review':
-        return State.Review;
-      case 'Relearning':
-        return State.Relearning;
-      default:
-        return State.New;
-    }
   }
 
   private getRatingEnum(rating: RatingType): Rating {

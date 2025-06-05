@@ -1,4 +1,3 @@
-import { RatingType } from 'ts-fsrs';
 import { Card } from '../cards/domain/card';
 import { FsrsCard } from '../fsrs/domain/fsrs-card';
 import { v4 as uuidv4 } from 'uuid';
@@ -34,48 +33,6 @@ export function newCardWithContent(
 }
 
 /**
- * Создает запись в журнале проверок на основе FSRS карточки
- */
-export function fsrsCardToReviewLog(
-  fsrsCard: FsrsCard,
-  rating: RatingType,
-): {
-  id: string;
-  cardId: string;
-  grade: RatingType;
-  state: string;
-  due: Date;
-  stability: number;
-  difficulty: number;
-  elapsed_days: number;
-  last_elapsed_days: number;
-  scheduled_days: number;
-  review: Date;
-  duration: number;
-  deleted: boolean;
-  createdAt: Date;
-} {
-  const now = new Date();
-
-  return {
-    id: uuidv4(),
-    cardId: fsrsCard.cardId,
-    grade: rating,
-    state: fsrsCard.state,
-    due: fsrsCard.due,
-    stability: fsrsCard.stability,
-    difficulty: fsrsCard.difficulty,
-    elapsed_days: fsrsCard.elapsed_days,
-    last_elapsed_days: 0, // Требуется вычислить на основе предыдущих логов
-    scheduled_days: fsrsCard.scheduled_days,
-    review: now,
-    duration: 0,
-    deleted: false,
-    createdAt: now,
-  };
-}
-
-/**
  * Расчет интервала в днях между двумя датами
  */
 export function calculateIntervalDays(date1: Date, date2: Date): number {
@@ -98,49 +55,6 @@ export function formatInterval(intervalDays: number): string {
     const months = Math.round(intervalDays / 30);
     return `${months} мес.`;
   }
-}
-
-/**
- * Получение статистики FSRS карточки
- */
-export function getFsrsCardStats(
-  fsrsCard: FsrsCard,
-  reviewLogs: ReturnType<typeof fsrsCardToReviewLog>[],
-): {
-  totalReviews: number;
-  successRate: number;
-  averageInterval: number;
-  daysSinceCreation: number;
-} {
-  const now = new Date();
-
-  const totalReviews = reviewLogs.length;
-
-  // Подсчет успешных повторений (Good и Easy)
-  const successfulReviews = reviewLogs.filter(
-    (log) => log.grade === 'Good' || log.grade === 'Easy',
-  ).length;
-
-  const successRate =
-    totalReviews > 0 ? Math.round((successfulReviews / totalReviews) * 100) : 0;
-
-  // Средний интервал
-  const intervals = reviewLogs.map((log) => log.scheduled_days);
-  const averageInterval =
-    intervals.length > 0
-      ? intervals.reduce((sum, interval) => sum + interval, 0) /
-        intervals.length
-      : 0;
-
-  // Дни с момента создания
-  const daysSinceCreation = calculateIntervalDays(fsrsCard.createdAt, now);
-
-  return {
-    totalReviews,
-    successRate,
-    averageInterval,
-    daysSinceCreation,
-  };
 }
 
 /**

@@ -2,7 +2,7 @@ import { User } from 'src/users/domain/user';
 import { DeepPartial } from '../../../utils/types/deep-partial.type';
 import { NullableType } from '../../../utils/types/nullable.type';
 import { IPaginationOptions } from '../../../utils/types/pagination-options';
-import { FsrsCard, FsrsCardWithContent } from '../../domain/fsrs-card';
+import { FsrsCard, FsrsCardWithContent, State } from '../../domain/fsrs-card';
 
 export abstract class FsrsCardRepository {
   abstract create(data: Omit<FsrsCard, 'id' | 'createdAt'>): Promise<FsrsCard>;
@@ -53,7 +53,7 @@ export abstract class FsrsCardRepository {
    * Включает Card данные через JOIN
    */
   abstract findByState(
-    state: string,
+    state: State,
     paginationOptions: IPaginationOptions,
     userId?: string,
   ): Promise<FsrsCardWithContent[]>;

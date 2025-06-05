@@ -1,8 +1,4 @@
-import {
-  FsrsCard,
-  FsrsCardWithContent,
-  StateType,
-} from '../../../../domain/fsrs-card';
+import { FsrsCard, FsrsCardWithContent } from '../../../../domain/fsrs-card';
 import { FsrsCardEntity } from '../entities/fsrs-card.entity';
 
 export class FsrsCardMapper {
@@ -17,7 +13,7 @@ export class FsrsCardMapper {
     domainEntity.scheduled_days = raw.scheduled_days;
     domainEntity.reps = raw.reps;
     domainEntity.lapses = raw.lapses;
-    domainEntity.state = raw.state as StateType;
+    domainEntity.state = raw.state;
     domainEntity.last_review = raw.last_review;
     domainEntity.suspended = raw.suspended;
     domainEntity.deleted = raw.deleted;

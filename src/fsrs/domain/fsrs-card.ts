@@ -1,8 +1,24 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Card } from 'src/cards/domain/card';
 
-export const states = ['New', 'Learning', 'Review', 'Relearning'] as const;
-export type StateType = (typeof states)[number];
+export type StateType = 'New' | 'Learning' | 'Review' | 'Relearning';
+
+export enum State {
+  New = 0,
+  Learning = 1,
+  Review = 2,
+  Relearning = 3,
+}
+
+export type RatingType = 'Manual' | 'Again' | 'Hard' | 'Good' | 'Easy';
+
+export enum Rating {
+  Manual = 0,
+  Again = 1,
+  Hard = 2,
+  Good = 3,
+  Easy = 4,
+}
 
 export class FsrsCard {
   @ApiProperty({
@@ -69,11 +85,11 @@ export class FsrsCard {
 
   @ApiProperty({
     type: String,
-    enum: states,
-    example: 'New',
+    enum: State,
+    example: '0',
     description: 'Состояние карточки в процессе обучения',
   })
-  state: StateType;
+  state: State;
 
   @ApiProperty({
     type: Date,

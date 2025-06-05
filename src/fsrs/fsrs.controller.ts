@@ -26,12 +26,7 @@ import {
   ApiBody,
   ApiQuery,
 } from '@nestjs/swagger';
-import {
-  FsrsCard,
-  FsrsCardWithContent,
-  StateType,
-  states,
-} from './domain/fsrs-card';
+import { FsrsCard, FsrsCardWithContent, State } from './domain/fsrs-card';
 import { AuthGuard } from '@nestjs/passport';
 import {
   InfinityPaginationResponse,
@@ -51,8 +46,6 @@ import { User } from '../users/domain/user';
 })
 export class FsrsController {
   constructor(private readonly fsrsService: FsrsService) {}
-
-  // ========== ОПТИМИЗИРОВАННЫЕ МЕТОДЫ ПОИСКА ==========
 
   @Get('due')
   @ApiOperation({
@@ -89,14 +82,12 @@ export class FsrsController {
     return this.fsrsService.findDueCardsByDeckId(deckId);
   }
 
-  // ========== НОВЫЕ ОПТИМИЗИРОВАННЫЕ МЕТОДЫ ==========
-
   @Get('cards/by-state/:state')
   @ApiOperation({ summary: 'Получить карточки по состоянию с пагинацией' })
   @ApiParam({
     name: 'state',
     description: 'Состояние карточки',
-    enum: states,
+    enum: State,
   })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
@@ -106,7 +97,7 @@ export class FsrsController {
   })
   @HttpCode(HttpStatus.OK)
   async findCardsByState(
-    @Param('state') state: StateType,
+    @Param('state') state: State,
     @Query('page') page = 1,
     @Query('limit') limit = 10,
     @Request() req,
@@ -226,8 +217,6 @@ export class FsrsController {
     return { retention };
   }
 
-  // ========== ДЕЙСТВИЯ С КАРТОЧКАМИ ==========
-
   @Post('card/:cardId/grade')
   @ApiOperation({ summary: 'Оценить карточку и обновить ее состояние' })
   @ApiParam({
@@ -345,8 +334,6 @@ export class FsrsController {
       message: t('fsrs.success.undoGrade'),
     };
   }
-
-  // ========== АДМИНИСТРАТИВНЫЕ МЕТОДЫ ==========
 
   @Get()
   @ApiOkResponse({

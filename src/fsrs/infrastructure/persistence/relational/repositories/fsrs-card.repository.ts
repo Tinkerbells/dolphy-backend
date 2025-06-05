@@ -3,7 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, SelectQueryBuilder } from 'typeorm';
 import { FsrsCardEntity } from '../entities/fsrs-card.entity';
 import { NullableType } from '../../../../../utils/types/nullable.type';
-import { FsrsCard, FsrsCardWithContent } from '../../../../domain/fsrs-card';
+import {
+  FsrsCard,
+  FsrsCardWithContent,
+  State,
+} from '../../../../domain/fsrs-card';
 import { FsrsCardRepository } from '../../fsrs-card.repository';
 import { FsrsCardMapper } from '../mappers/fsrs-card.mapper';
 import { IPaginationOptions } from '../../../../../utils/types/pagination-options';
@@ -141,7 +145,7 @@ export class FsrsCardRelationalRepository implements FsrsCardRepository {
    * Новый метод: поиск карточек по состоянию с пагинацией
    */
   async findByState(
-    state: string,
+    state: State,
     paginationOptions: IPaginationOptions,
     userId?: string,
   ): Promise<FsrsCardWithContent[]> {

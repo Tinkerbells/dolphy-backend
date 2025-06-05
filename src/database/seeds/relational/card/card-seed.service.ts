@@ -5,6 +5,7 @@ import { CardEntity } from '../../../../cards/infrastructure/persistence/relatio
 import { DeckEntity } from '../../../../decks/infrastructure/persistence/relational/entities/deck.entity';
 import { FsrsCardEntity } from '../../../../fsrs/infrastructure/persistence/relational/entities/fsrs-card.entity';
 import { v4 as uuidv4 } from 'uuid';
+import { State } from 'src/fsrs/domain/fsrs-card';
 
 @Injectable()
 export class CardSeedService {
@@ -269,7 +270,7 @@ export class CardSeedService {
       scheduled_days: 0,
       reps: 0,
       lapses: 0,
-      state: 'New',
+      state: State.New,
       last_review: undefined,
       suspended: now,
       deleted: false,
