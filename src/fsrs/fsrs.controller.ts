@@ -227,7 +227,7 @@ export class FsrsController {
   })
   @ApiBody({ type: GradeCardDto })
   @ApiOkResponse({
-    type: CardActionResponseDto,
+    type: FsrsCardWithContent,
     description: 'Результат оценки карточки',
   })
   @HttpCode(HttpStatus.OK)
@@ -235,17 +235,14 @@ export class FsrsController {
     @Param('cardId') cardId: string,
     @Body() body: GradeCardDto,
     @Request() req: { user: User },
-  ): Promise<CardActionResponseDto> {
+  ): Promise<FsrsCardWithContent> {
     const result = await this.fsrsService.gradeCard(
       cardId,
       body.rating,
       req.user.id,
     );
 
-    return {
-      ...result,
-      message: t('fsrs.success.cardGraded'),
-    };
+    return result;
   }
 
   @Post('card/:cardId/suspend')

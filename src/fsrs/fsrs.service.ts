@@ -104,7 +104,7 @@ export class FsrsService {
     cardId: string,
     rating: Rating,
     userId: User['id'],
-  ): Promise<{ card: Card; fsrsCard: FsrsCard }> {
+  ): Promise<FsrsCardWithContent> {
     // Получаем Card, если нужно проверить права доступа
     const card = await this.cardRepository.findById(cardId);
     if (!card) {
@@ -119,7 +119,10 @@ export class FsrsService {
     // Применяем оценку
     const fsrsCard = await this.applyRating(cardId, rating);
 
-    return { card, fsrsCard };
+    return {
+      ...fsrsCard,
+      card: card,
+    };
   }
 
   /**
