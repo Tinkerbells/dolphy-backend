@@ -17,6 +17,8 @@ import {
   RatingType,
 } from 'ts-fsrs';
 import { FsrsCardRepository } from './infrastructure/persistence/fsrs-card.repository';
+import { FsrsReviewLogRepository } from './infrastructure/persistence/fsrs-review-log.repository';
+import { FsrsReviewLog } from './domain/fsrs-review-log';
 import { CardRepository } from '../cards/infrastructure/persistence/card.repository';
 import { User } from 'src/users/domain/user';
 import { Card } from '../cards/domain/card';
@@ -29,6 +31,7 @@ export class FsrsService {
 
   constructor(
     private readonly fsrsCardRepository: FsrsCardRepository,
+    private readonly fsrsReviewLogRepository: FsrsReviewLogRepository,
     private readonly cardRepository: CardRepository,
   ) {
     // Инициализация с параметрами по умолчанию
@@ -147,6 +150,7 @@ export class FsrsService {
     // Применяем оценки
     const updates: Array<{ id: string; data: Partial<FsrsCard> }> = [];
     const results: Array<{ card: Card; fsrsCard: FsrsCard }> = [];
+    const reviewLogs: FsrsReviewLog[] = [];
 
     for (const grade of grades) {
       const card = cards.find((c) => c.id === grade.cardId);
@@ -154,17 +158,21 @@ export class FsrsService {
 
       if (!card || !fsrsCard) continue;
 
-      const updatedFsrsCard = this.calculateNewFsrsState(
+      const { updatedCard, reviewLog } = this.calculateNewFsrsState(
         fsrsCard,
         grade.rating,
       );
 
       updates.push({
         id: fsrsCard.id,
-        data: updatedFsrsCard,
+        data: updatedCard,
       });
 
-      results.push({ card, fsrsCard: updatedFsrsCard });
+      results.push({ card, fsrsCard: updatedCard });
+
+      if (reviewLog) {
+        reviewLogs.push(reviewLog);
+      }
     }
 
     // Пакетное обновление в базе данных
@@ -172,21 +180,42 @@ export class FsrsService {
       await this.fsrsCardRepository.batchUpdate(updates);
     }
 
+    // Сохраняем логи для возможности отката
+    for (const reviewLog of reviewLogs) {
+      await this.fsrsReviewLogRepository.create(reviewLog);
+    }
+
     return results;
   }
 
   /**
-   * Вычисление нового состояния FSRS карточки без сохранения в БД
+   * Вычисление нового состояния FSRS карточки с сохранением лога для отката
    */
-  private calculateNewFsrsState(fsrsCard: FsrsCard, rating: Rating): FsrsCard {
+  private calculateNewFsrsState(
+    fsrsCard: FsrsCard,
+    rating: Rating,
+  ): { updatedCard: FsrsCard; reviewLog?: FsrsReviewLog } {
     const fsrsApiCard = this.toFsrsApiCard(fsrsCard);
     const now = new Date();
 
     if (rating !== Rating.Manual) {
       const result = this.fsrsInstance.next(fsrsApiCard, now, rating);
 
+      // Создаем лог для возможности отката
+      const reviewLog = new FsrsReviewLog();
+      reviewLog.fsrsCardId = fsrsCard.id;
+      reviewLog.rating = result.log.rating;
+      reviewLog.review = result.log.review;
+      reviewLog.state = result.log.state;
+      reviewLog.due = result.log.due;
+      reviewLog.stability = result.log.stability;
+      reviewLog.difficulty = result.log.difficulty;
+      reviewLog.elapsed_days = result.log.elapsed_days;
+      reviewLog.last_elapsed_days = result.log.last_elapsed_days;
+      reviewLog.scheduled_days = result.log.scheduled_days;
+
       // Создаем новый объект с обновленными данными
-      return {
+      const updatedCard = {
         ...fsrsCard,
         due: result.card.due,
         stability: result.card.stability,
@@ -198,9 +227,11 @@ export class FsrsService {
         state: result.card.state,
         last_review: now,
       };
+
+      return { updatedCard, reviewLog };
     }
 
-    return fsrsCard;
+    return { updatedCard: fsrsCard };
   }
 
   /**
@@ -212,15 +243,23 @@ export class FsrsService {
       throw new Error('FsrsCard not found');
     }
 
-    const updatedFsrsCard = this.calculateNewFsrsState(fsrsCard, rating);
+    const { updatedCard, reviewLog } = this.calculateNewFsrsState(
+      fsrsCard,
+      rating,
+    );
 
     // Сохраняем обновленную карточку
     const result = await this.fsrsCardRepository.update(
       fsrsCard.id,
-      updatedFsrsCard,
+      updatedCard,
     );
     if (!result) {
       throw new Error('Failed to update FsrsCard');
+    }
+
+    // Сохраняем лог для возможности отката
+    if (reviewLog) {
+      await this.fsrsReviewLogRepository.create(reviewLog);
     }
 
     return result;
@@ -406,7 +445,7 @@ export class FsrsService {
   }
 
   /**
-   * Отменяет последнюю оценку карточки
+   * Отменяет последнюю оценку карточки используя FSRS rollback
    */
   async undoLastRating(cardId: string): Promise<FsrsCard> {
     const fsrsCard = await this.fsrsCardRepository.findByCardId(cardId);
@@ -414,36 +453,50 @@ export class FsrsService {
       throw new Error('FsrsCard not found');
     }
 
-    // Упрощенная логика отмены
-    const undoData: Partial<FsrsCard> = {};
+    // Находим последний лог оценки
+    const lastReviewLog =
+      await this.fsrsReviewLogRepository.findLastByFsrsCardId(fsrsCard.id);
+    if (!lastReviewLog) {
+      throw new Error('No review history found for rollback');
+    }
 
-    if (fsrsCard.reps > 0) {
-      undoData.reps = Math.max(0, fsrsCard.reps - 1);
+    // Выполняем rollback используя ts-fsrs
+    const currentCard = this.toFsrsApiCard(fsrsCard);
+    const reviewLog = lastReviewLog.toReviewLog();
 
-      if (undoData.reps === 0) {
-        const emptyCard = createEmptyCard();
-        Object.assign(undoData, {
-          state: emptyCard.state,
-          due: emptyCard.due,
-          stability: emptyCard.stability,
-          difficulty: emptyCard.difficulty,
-          elapsed_days: emptyCard.elapsed_days,
-          scheduled_days: emptyCard.scheduled_days,
-          lapses: emptyCard.lapses,
-          last_review: undefined,
-        });
+    try {
+      const previousCard = this.fsrsInstance.rollback(currentCard, reviewLog);
+
+      // Обновляем карточку состоянием до последней оценки
+      const rollbackData: Partial<FsrsCard> = {
+        due: previousCard.due,
+        stability: previousCard.stability,
+        difficulty: previousCard.difficulty,
+        elapsed_days: previousCard.elapsed_days,
+        scheduled_days: previousCard.scheduled_days,
+        reps: previousCard.reps,
+        lapses: previousCard.lapses,
+        state: previousCard.state,
+        last_review: previousCard.last_review,
+      };
+
+      const updatedCard = await this.fsrsCardRepository.update(
+        fsrsCard.id,
+        rollbackData,
+      );
+      if (!updatedCard) {
+        throw new Error('Failed to update FsrsCard');
       }
-    }
 
-    const updatedCard = await this.fsrsCardRepository.update(
-      fsrsCard.id,
-      undoData,
-    );
-    if (!updatedCard) {
-      throw new Error('Failed to update FsrsCard');
-    }
+      // Удаляем использованный лог оценки
+      await this.fsrsReviewLogRepository.remove(lastReviewLog.id);
 
-    return updatedCard;
+      return updatedCard;
+    } catch (error) {
+      throw new Error(
+        `Failed to rollback card: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
   }
 
   // Методы для совместимости с контроллером
