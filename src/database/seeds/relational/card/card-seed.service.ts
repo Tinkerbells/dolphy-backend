@@ -48,7 +48,7 @@ export class CardSeedService {
       const cards: CardEntity[] = [];
       const fsrsCards: FsrsCardEntity[] = [];
 
-      // Карточки японского языка
+      // Карточки японского языка (20 карточек)
       if (japaneseBasicsDeck) {
         const japaneseCardData = [
           {
@@ -75,6 +75,106 @@ export class CardSeedService {
               level: 'beginner',
             },
           },
+          {
+            question: 'Как сказать "извините" на японском?',
+            answer: 'すみません (сумимасэн)',
+            metadata: { tags: ['извинение', 'вежливость'], level: 'beginner' },
+          },
+          {
+            question: 'Как сказать "да" на японском?',
+            answer: 'はい (хаи)',
+            metadata: { tags: ['ответы', 'базовые фразы'], level: 'beginner' },
+          },
+          {
+            question: 'Как сказать "нет" на японском?',
+            answer: 'いいえ (иие)',
+            metadata: { tags: ['ответы', 'базовые фразы'], level: 'beginner' },
+          },
+          {
+            question: 'Как сказать "доброе утро" на японском?',
+            answer: 'おはようございます (охаё гозаимас)',
+            metadata: { tags: ['приветствие', 'время дня'], level: 'beginner' },
+          },
+          {
+            question: 'Как сказать "добрый вечер" на японском?',
+            answer: 'こんばんは (конбанва)',
+            metadata: { tags: ['приветствие', 'время дня'], level: 'beginner' },
+          },
+          {
+            question: 'Как сказать "один" на японском?',
+            answer: '一 / いち (ичи)',
+            metadata: { tags: ['числа', 'счёт'], level: 'beginner' },
+          },
+          {
+            question: 'Как сказать "два" на японском?',
+            answer: '二 / に (ни)',
+            metadata: { tags: ['числа', 'счёт'], level: 'beginner' },
+          },
+          {
+            question: 'Как сказать "три" на японском?',
+            answer: '三 / さん (сан)',
+            metadata: { tags: ['числа', 'счёт'], level: 'beginner' },
+          },
+          {
+            question: 'Как сказать "красный" на японском?',
+            answer: '赤い (акаи)',
+            metadata: { tags: ['цвета', 'прилагательные'], level: 'beginner' },
+          },
+          {
+            question: 'Как сказать "синий" на японском?',
+            answer: '青い (аои)',
+            metadata: { tags: ['цвета', 'прилагательные'], level: 'beginner' },
+          },
+          {
+            question: 'Как сказать "вода" на японском?',
+            answer: '水 (мидзу)',
+            metadata: {
+              tags: ['еда и напитки', 'существительные'],
+              level: 'beginner',
+            },
+          },
+          {
+            question: 'Как сказать "еда" на японском?',
+            answer: '食べ物 (табэмоно)',
+            metadata: {
+              tags: ['еда и напитки', 'существительные'],
+              level: 'beginner',
+            },
+          },
+          {
+            question: 'Как сказать "я" на японском?',
+            answer: '私 (ваташи)',
+            metadata: {
+              tags: ['местоимения', 'грамматика'],
+              level: 'beginner',
+            },
+          },
+          {
+            question: 'Как сказать "вы" на японском?',
+            answer: 'あなた (аната)',
+            metadata: {
+              tags: ['местоимения', 'грамматика'],
+              level: 'beginner',
+            },
+          },
+          {
+            question: 'Как сказать "мать" на японском?',
+            answer: 'お母さん (окаасан)',
+            metadata: { tags: ['семья', 'родственники'], level: 'beginner' },
+          },
+          {
+            question: 'Как сказать "отец" на японском?',
+            answer: 'お父さん (отоосан)',
+            metadata: { tags: ['семья', 'родственники'], level: 'beginner' },
+          },
+          {
+            question: 'Как сказать "понимаю" на японском?',
+            answer: 'わかります (вакаримас)',
+            metadata: {
+              tags: ['понимание', 'полезные фразы'],
+              level: 'beginner',
+            },
+          },
         ];
 
         japaneseCardData.forEach((cardData) => {
@@ -89,7 +189,7 @@ export class CardSeedService {
         });
       }
 
-      // Карточки математики
+      // Карточки математики (18 карточек)
       if (mathDeck) {
         const mathCardData = [
           {
@@ -108,6 +208,134 @@ export class CardSeedService {
               level: 'intermediate',
             },
           },
+          {
+            question: 'Чему равен sin(0°)?',
+            answer: '0',
+            metadata: {
+              tags: ['тригонометрия', 'синус'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Чему равен cos(90°)?',
+            answer: '0',
+            metadata: {
+              tags: ['тригонометрия', 'косинус'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Чему равен tan(45°)?',
+            answer: '1',
+            metadata: {
+              tags: ['тригонометрия', 'тангенс'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Чему равен sin(30°)?',
+            answer: '1/2 или 0.5',
+            metadata: {
+              tags: ['тригонометрия', 'синус'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Чему равен cos(60°)?',
+            answer: '1/2 или 0.5',
+            metadata: {
+              tags: ['тригонометрия', 'косинус'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Чему равен sin(60°)?',
+            answer: '√3/2 или ~0.866',
+            metadata: {
+              tags: ['тригонометрия', 'синус'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Чему равен cos(30°)?',
+            answer: '√3/2 или ~0.866',
+            metadata: {
+              tags: ['тригонометрия', 'косинус'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Основное тригонометрическое тождество?',
+            answer: 'sin²(x) + cos²(x) = 1',
+            metadata: {
+              tags: ['тригонометрия', 'тождества'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Формула tan(x) через sin и cos?',
+            answer: 'tan(x) = sin(x) / cos(x)',
+            metadata: {
+              tags: ['тригонометрия', 'формулы'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Период функции sin(x)?',
+            answer: '2π',
+            metadata: {
+              tags: ['тригонометрия', 'периодичность'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Период функции cos(x)?',
+            answer: '2π',
+            metadata: {
+              tags: ['тригонометрия', 'периодичность'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Период функции tan(x)?',
+            answer: 'π',
+            metadata: {
+              tags: ['тригонометрия', 'периодичность'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Область значений sin(x)?',
+            answer: '[-1; 1]',
+            metadata: {
+              tags: ['тригонометрия', 'область значений'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Область значений cos(x)?',
+            answer: '[-1; 1]',
+            metadata: {
+              tags: ['тригонометрия', 'область значений'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'sin(-x) = ?',
+            answer: '-sin(x) (нечётная функция)',
+            metadata: {
+              tags: ['тригонометрия', 'свойства'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'cos(-x) = ?',
+            answer: 'cos(x) (чётная функция)',
+            metadata: {
+              tags: ['тригонометрия', 'свойства'],
+              level: 'intermediate',
+            },
+          },
         ];
 
         mathCardData.forEach((cardData) => {
@@ -122,7 +350,7 @@ export class CardSeedService {
         });
       }
 
-      // Карточки английского
+      // Карточки английского (20 карточек)
       if (englishDeck) {
         const englishCardData = [
           {
@@ -149,6 +377,142 @@ export class CardSeedService {
               level: 'intermediate',
             },
           },
+          {
+            question: 'Как переводится неправильный глагол "come"?',
+            answer: 'come - came - come (приходить, приезжать)',
+            metadata: {
+              tags: ['неправильные глаголы', 'движение'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Как переводится неправильный глагол "do"?',
+            answer: 'do - did - done (делать)',
+            metadata: {
+              tags: ['неправильные глаголы', 'действие'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Как переводится неправильный глагол "have"?',
+            answer: 'have - had - had (иметь)',
+            metadata: {
+              tags: ['неправильные глаголы', 'обладание'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Как переводится неправильный глагол "make"?',
+            answer: 'make - made - made (делать, создавать)',
+            metadata: {
+              tags: ['неправильные глаголы', 'создание'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Как переводится неправильный глагол "know"?',
+            answer: 'know - knew - known (знать)',
+            metadata: {
+              tags: ['неправильные глаголы', 'знание'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Как переводится неправильный глагол "think"?',
+            answer: 'think - thought - thought (думать)',
+            metadata: {
+              tags: ['неправильные глаголы', 'мышление'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Как переводится неправильный глагол "say"?',
+            answer: 'say - said - said (сказать)',
+            metadata: {
+              tags: ['неправильные глаголы', 'речь'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Как переводится неправильный глагол "tell"?',
+            answer: 'tell - told - told (рассказывать)',
+            metadata: {
+              tags: ['неправильные глаголы', 'речь'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Как переводится неправильный глагол "give"?',
+            answer: 'give - gave - given (давать)',
+            metadata: {
+              tags: ['неправильные глаголы', 'передача'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Как переводится неправильный глагол "get"?',
+            answer: 'get - got - got/gotten (получать)',
+            metadata: {
+              tags: ['неправильные глаголы', 'получение'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Как переводится неправильный глагол "find"?',
+            answer: 'find - found - found (находить)',
+            metadata: {
+              tags: ['неправильные глаголы', 'поиск'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Как переводится неправильный глагол "leave"?',
+            answer: 'leave - left - left (оставлять, уходить)',
+            metadata: {
+              tags: ['неправильные глаголы', 'движение'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Как переводится неправильный глагол "put"?',
+            answer: 'put - put - put (класть, ставить)',
+            metadata: {
+              tags: ['неправильные глаголы', 'размещение'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Как переводится неправильный глагол "buy"?',
+            answer: 'buy - bought - bought (покупать)',
+            metadata: {
+              tags: ['неправильные глаголы', 'покупки'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Как переводится неправильный глагол "write"?',
+            answer: 'write - wrote - written (писать)',
+            metadata: {
+              tags: ['неправильные глаголы', 'письмо'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Как переводится неправильный глагол "read"?',
+            answer: 'read - read - read (читать)',
+            metadata: {
+              tags: ['неправильные глаголы', 'чтение'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Как переводится неправильный глагол "run"?',
+            answer: 'run - ran - run (бегать)',
+            metadata: {
+              tags: ['неправильные глаголы', 'движение'],
+              level: 'intermediate',
+            },
+          },
         ];
 
         englishCardData.forEach((cardData) => {
@@ -163,7 +527,7 @@ export class CardSeedService {
         });
       }
 
-      // Карточки JavaScript
+      // Карточки JavaScript (18 карточек)
       if (jsDeck) {
         const jsCardData = [
           {
@@ -181,6 +545,115 @@ export class CardSeedService {
               level: 'beginner',
             },
           },
+          {
+            question: 'Какие есть примитивные типы данных в JavaScript?',
+            answer: 'string, number, boolean, undefined, null, symbol, bigint',
+            metadata: { tags: ['типы данных', 'основы'], level: 'beginner' },
+          },
+          {
+            question: 'Как проверить тип переменной в JavaScript?',
+            answer: 'typeof variable',
+            metadata: { tags: ['типы данных', 'операторы'], level: 'beginner' },
+          },
+          {
+            question: 'Что такое hoisting в JavaScript?',
+            answer:
+              'Механизм поднятия объявлений переменных и функций в начало области видимости',
+            metadata: {
+              tags: ['hoisting', 'концепции'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'В чём разница между let, const и var?',
+            answer:
+              'var - функциональная область видимости, let/const - блочная, const нельзя переназначить',
+            metadata: {
+              tags: ['переменные', 'область видимости'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Как создать функцию в JavaScript?',
+            answer:
+              'function myFunc() {} или const myFunc = () => {} или const myFunc = function() {}',
+            metadata: { tags: ['функции', 'синтаксис'], level: 'beginner' },
+          },
+          {
+            question: 'Что такое замыкание (closure) в JavaScript?',
+            answer:
+              'Функция, которая имеет доступ к переменным внешней функции даже после её завершения',
+            metadata: {
+              tags: ['замыкания', 'концепции'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Как добавить элемент в конец массива?',
+            answer: 'array.push(element)',
+            metadata: { tags: ['массивы', 'методы'], level: 'beginner' },
+          },
+          {
+            question: 'Как удалить последний элемент из массива?',
+            answer: 'array.pop()',
+            metadata: { tags: ['массивы', 'методы'], level: 'beginner' },
+          },
+          {
+            question: 'Что такое this в JavaScript?',
+            answer:
+              'Ключевое слово, которое ссылается на контекст выполнения функции',
+            metadata: { tags: ['this', 'контекст'], level: 'intermediate' },
+          },
+          {
+            question: 'Как создать объект в JavaScript?',
+            answer:
+              'const obj = {} или const obj = new Object() или const obj = {key: value}',
+            metadata: { tags: ['объекты', 'синтаксис'], level: 'beginner' },
+          },
+          {
+            question: 'Что такое Promise в JavaScript?',
+            answer:
+              'Объект для работы с асинхронными операциями, имеющий состояния: pending, fulfilled, rejected',
+            metadata: {
+              tags: ['промисы', 'асинхронность'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Что делает метод map() у массивов?',
+            answer:
+              'Создаёт новый массив, применяя функцию к каждому элементу исходного массива',
+            metadata: { tags: ['массивы', 'методы'], level: 'intermediate' },
+          },
+          {
+            question: 'Что делает метод filter() у массивов?',
+            answer:
+              'Создаёт новый массив с элементами, прошедшими проверку в callback функции',
+            metadata: { tags: ['массивы', 'методы'], level: 'intermediate' },
+          },
+          {
+            question: 'Как превратить строку в число?',
+            answer: 'Number(str), parseInt(str), parseFloat(str) или +str',
+            metadata: {
+              tags: ['преобразование типов', 'строки'],
+              level: 'beginner',
+            },
+          },
+          {
+            question: 'Что такое деструктуризация в JavaScript?',
+            answer:
+              'Синтаксис для извлечения данных из массивов или объектов: [a, b] = array, {x, y} = object',
+            metadata: {
+              tags: ['деструктуризация', 'ES6'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Что такое spread оператор (...)?',
+            answer:
+              'Оператор распространения для "раскрытия" массивов или объектов: [...array], {...object}',
+            metadata: { tags: ['spread', 'ES6'], level: 'intermediate' },
+          },
         ];
 
         jsCardData.forEach((cardData) => {
@@ -195,7 +668,7 @@ export class CardSeedService {
         });
       }
 
-      // Карточки географии
+      // Карточки географии (20 карточек)
       if (geographyDeck) {
         const geographyCardData = [
           {
@@ -215,6 +688,98 @@ export class CardSeedService {
               tags: ['южная америка', 'столицы'],
               level: 'intermediate',
             },
+          },
+          {
+            question: 'Какая столица Германии?',
+            answer: 'Берлин',
+            metadata: { tags: ['европа', 'столицы'], level: 'beginner' },
+          },
+          {
+            question: 'Какая столица Италии?',
+            answer: 'Рим',
+            metadata: { tags: ['европа', 'столицы'], level: 'beginner' },
+          },
+          {
+            question: 'Какая столица Канады?',
+            answer: 'Оттава',
+            metadata: {
+              tags: ['северная америка', 'столицы'],
+              level: 'intermediate',
+            },
+          },
+          {
+            question: 'Какая столица Австралии?',
+            answer: 'Канберра',
+            metadata: { tags: ['океания', 'столицы'], level: 'intermediate' },
+          },
+          {
+            question: 'Какая столица Индии?',
+            answer: 'Нью-Дели',
+            metadata: { tags: ['азия', 'столицы'], level: 'beginner' },
+          },
+          {
+            question: 'Какая столица Египта?',
+            answer: 'Каир',
+            metadata: { tags: ['африка', 'столицы'], level: 'beginner' },
+          },
+          {
+            question: 'Какая столица Испании?',
+            answer: 'Мадрид',
+            metadata: { tags: ['европа', 'столицы'], level: 'beginner' },
+          },
+          {
+            question: 'Какая столица Китая?',
+            answer: 'Пекин',
+            metadata: { tags: ['азия', 'столицы'], level: 'beginner' },
+          },
+          {
+            question: 'Какая столица Великобритании?',
+            answer: 'Лондон',
+            metadata: { tags: ['европа', 'столицы'], level: 'beginner' },
+          },
+          {
+            question: 'Какая столица Мексики?',
+            answer: 'Мехико',
+            metadata: {
+              tags: ['северная америка', 'столицы'],
+              level: 'beginner',
+            },
+          },
+          {
+            question: 'Какая столица Турции?',
+            answer: 'Анкара',
+            metadata: { tags: ['азия', 'столицы'], level: 'intermediate' },
+          },
+          {
+            question: 'Какая столица Аргентины?',
+            answer: 'Буэнос-Айрес',
+            metadata: { tags: ['южная америка', 'столицы'], level: 'beginner' },
+          },
+          {
+            question: 'Какая столица ЮАР?',
+            answer:
+              'Кейптаун (законодательная), Претория (исполнительная), Блумфонтейн (судебная)',
+            metadata: { tags: ['африка', 'столицы'], level: 'advanced' },
+          },
+          {
+            question: 'Какая столица Норвегии?',
+            answer: 'Осло',
+            metadata: { tags: ['европа', 'столицы'], level: 'intermediate' },
+          },
+          {
+            question: 'Какая столица Таиланда?',
+            answer: 'Бангкок',
+            metadata: { tags: ['азия', 'столицы'], level: 'beginner' },
+          },
+          {
+            question: 'Какая столица Швеции?',
+            answer: 'Стокгольм',
+            metadata: { tags: ['европа', 'столицы'], level: 'intermediate' },
+          },
+          {
+            question: 'Какая столица Нидерландов?',
+            answer: 'Амстердам',
+            metadata: { tags: ['европа', 'столицы'], level: 'beginner' },
           },
         ];
 
